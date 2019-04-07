@@ -1,0 +1,23 @@
+0 
+build_ghosts: 0.0101891
+communication: 2.31266e-05
+find_cell: 2.41566
+get_border_cond: 0.164466
+get_possible_neighs: 2.26561
+init_mesh: 0.026967
+io: 0.0304072
+sort_neighs: 0.796029
+step: 6.71808
+total: 7.00222
+
+1 
+build_ghosts: 0.010483
+communication: 3.81692
+find_cell: 0
+get_border_cond: 0.162001
+get_possible_neighs: 2.17483
+init_mesh: 0.0270519
+io: 3.84232
+sort_neighs: 0.780344
+step: 2.9064
+total: 6.99938
