@@ -12,6 +12,14 @@ using std::vector;
 using std::map;
 using std::string;
 
+extern int    base_sz;
+extern double base_dx;
+extern double min_dx;
+extern int    max_lvl;
+extern int    base_lvl;
+
+void GridInit(int base_lvl, int max_lvl);
+
 /* * * * * * * * * * РАБОТА С ИНДЕКСАМИ * * * * * * * * * */
 
 typedef long long int GlobalNumber_t;
@@ -67,7 +75,7 @@ struct CellIndex {
     vector<CellIndex> get_all_larger_possible_neighs();
     vector<CellIndex>& get_all_larger_possible_neighs_optimized(vector<CellIndex>&);
 
-    vector<GlobalNumber_t> get_all_possible_neighbours_ids(MpiTimer& timer);
+    vector<GlobalNumber_t> get_all_possible_neighbours_ids();
 
     bool is_border();
 };
@@ -84,8 +92,10 @@ struct Cell: public CellIndex {
 
     Cell() {}
     Cell(int _lvl, GlobalNumber_t globalNumber): CellIndex(_lvl, globalNumber) {}
-    Cell(const Cell& c): CellIndex(c.lvl, c.i, c.j) {temp[0] = c.temp[0]; temp[1] = c.temp[1]; }
-    Cell& operator=(const Cell& c) { lvl = c.lvl; i = c.i; j = c.j; temp[0] = c.temp[0]; temp[1] = c.temp[1]; return *this; }
+    Cell(int _lvl, int _i, int _j): CellIndex(_lvl, _i, _j) {}
+    Cell(CellIndex ci, double _temp): CellIndex(ci) { temp[0] = _temp; temp[1] = 0.0; }
+    Cell(const Cell& c): CellIndex(c.lvl, c.i, c.j) { temp[0] = c.temp[0]; temp[1] = c.temp[1]; refine_mark = c.refine_mark; }
+    Cell& operator=(const Cell& c) { lvl = c.lvl; i = c.i; j = c.j; temp[0] = c.temp[0]; temp[1] = c.temp[1]; refine_mark = c.refine_mark; return *this; }
 
     double *get_temp() { return &temp[0]; }
     void    get_spacial_coords(double *x, double *y);
@@ -94,27 +104,35 @@ struct Cell: public CellIndex {
         double lvl_dx = min_dx * pow(2, max_lvl - lvl);
         return lvl_dx * lvl_dx;
     }
+
+    void mark_to_refine() { refine_mark = 1; }
+    vector<Cell> split();
+
 };
 
 
 struct LinearTree {
-
-    int    base_sz;
-    double base_dx;
-    double min_dx;
-    int    max_lvl;
-    int    base_lvl;
+    
+    int max_present_lvl;
 
     vector<Cell> cells;
 
     LinearTree() {}
     LinearTree(string filename);
-    LinearTree(int base_size, int max_level, double (*Temp_func)(double, double));
+    LinearTree(double (*Temp_func)(double, double));
 
     int FindCell(GlobalNumber_t target, Cell *cell);
 
-    void MarkToRefine();
+    // returns 1 if where are cells to refine and they can be refined, 0 otherwise
+    int  MarkToRefine();
     void DoRefine();
+    void Balance21();
 
     void Write(string filename);
+    vector<char> GenWriteStruct();
+
 };
+
+double get_grad(double w00, double w01, double w02,
+                double w10, double w11, double w12,
+                double w20, double w21, double w22, double dx);

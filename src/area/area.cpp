@@ -15,10 +15,41 @@ double Area::a = lambda / (ro * c);
 
 // начальное распределение температуры и граничные условия
 double Area::T0(double x, double y) {
-    double r = 0.3;
-    double c = 0.5;
-    if ( (x-c) * (x-c) + (y-c) * (y-c) < r*r ) { //,0078125 < 0,09
+    double r = 0.05;
+    double c_x = 0.25;
+    double c_y = 0.25;
+    if ( (x-c_x) * (x-c_x) + (y-c_y) * (y-c_y) < r*r ) { //,0078125 < 0,09
         return 10;
+    }
+    return 0.0;
+}
+
+int Area::Refine1(double x, double y) {
+    double r = 0.2;
+    double c_x = 0.25;
+    double c_y = 0.25;
+    if ( (x-c_x) * (x-c_x) + (y-c_y) * (y-c_y) < r*r ) { //,0078125 < 0,09
+        return 1;
+    }
+    return 0.0;
+}
+
+int Area::Refine2(double x, double y) {
+    double r = 0.1;
+    double c_x = 0.25;
+    double c_y = 0.25;
+    if ( (x-c_x) * (x-c_x) + (y-c_y) * (y-c_y) < r*r ) { //,0078125 < 0,09
+        return 1;
+    }
+    return 0.0;
+}
+
+int Area::Refine3(double x, double y) {
+    double r = 0.05;
+    double c_x = 0.25;
+    double c_y = 0.25;
+    if ( (x-c_x) * (x-c_x) + (y-c_y) * (y-c_y) < r*r ) { //,0078125 < 0,09
+        return 1;
     }
     return 0.0;
 }
@@ -80,7 +111,3 @@ double Area::Q(double x, double y, double t) {
     }
     return 0;
 }
-
-
-int Area::max_grid_levels = 2;
-double Area::refine_thresholds[] = {10};

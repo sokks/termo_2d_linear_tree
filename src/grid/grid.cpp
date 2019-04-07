@@ -4,6 +4,32 @@ using std::vector;
 using std::map;
 using std::string;
 using std::sort;
+using std::cout;
+using std::endl;
+
+int    base_sz;
+double base_dx;
+double min_dx;
+int    max_lvl;
+int    base_lvl;
+
+void GridInit(int base_level, int max_level) {
+    base_lvl = base_level;
+    max_lvl  = max_level;
+
+    base_sz  = pow(2, base_lvl);
+    base_dx  = (Area::x_end - Area::x_start) / base_sz;
+
+    int max_sz = pow(2, max_lvl);
+    min_dx  = (Area::x_end - Area::x_start) / max_sz;
+
+    cout << "GRID PARAMS INITED" <<
+            "\nmax_lvl=" << max_lvl <<
+            "\nmin_dx=" << min_dx <<
+            "\nbase_lvl=" << base_sz <<
+            "\nbase_dx=" << base_dx <<
+            "\nbase_sz=" << base_sz << endl;
+}
 
 
 /* * * * * * * * * * РАБОТА С ИНДЕКСАМИ * * * * * * * * * */
@@ -376,7 +402,7 @@ vector<CellIndex>& CellIndex::get_all_larger_possible_neighs_optimized(vector<Ce
 }
 
 // TODO optimize copying
-vector<GlobalNumber_t> CellIndex::get_all_possible_neighbours_ids(MpiTimer& timer) {
+vector<GlobalNumber_t> CellIndex::get_all_possible_neighbours_ids() {
     vector<CellIndex> all_neighs;
     all_neighs.reserve(20);
 
@@ -390,9 +416,7 @@ vector<GlobalNumber_t> CellIndex::get_all_possible_neighbours_ids(MpiTimer& time
         all_neighs_ids.push_back(c.get_global_number());
     }
 
-    timer.Start();
     sort(all_neighs_ids.begin(), all_neighs_ids.end());
-    timer.Stop();
 
     vector<GlobalNumber_t> all_neighs_ids_without_duplicates;
     all_neighs_ids_without_duplicates.reserve(all_neighs_ids.size());
@@ -456,8 +480,6 @@ double dist(double x1, double y1, double x2, double y2) {
 }
 
 void Cell::get_spacial_coords(double *x, double *y) {
-    // можно сразу задать min_dx и использовать его
-    double min_dx = base_dx/pow(2,max_lvl-lvl);
     double lvl_dx = min_dx * pow(2, max_lvl - lvl);
     *x = min_dx * i + lvl_dx/2; 
     *y = min_dx * j + lvl_dx/2; 
@@ -487,60 +509,57 @@ void Cell::get_border_cond(char *cond_type, double (**cond_func)(double, double,
     *cond_type = -1;
 }
 
+vector<Cell> Cell::split() {
+    vector<Cell> children;
+    
+    CellIndex ci00 = ((CellIndex)(*this)).get_child(Child::cLD);
+    Cell c00 = Cell(ci00, 0.0);
+    double x, y;
+    c00.get_spacial_coords(&x, &y);
+    c00.temp[0] = Area::T0(x, y);
+    children.push_back(c00);
+
+    CellIndex ci01 = ((CellIndex)(*this)).get_child(Child::cRD);
+    Cell c01 = Cell(ci01, 0.0);
+    c01.get_spacial_coords(&x, &y);
+    c01.temp[0] = Area::T0(x, y);
+    children.push_back(c01);
+
+    CellIndex ci10 = ((CellIndex)(*this)).get_child(Child::cLU);
+    Cell c10 = Cell(ci10, 0.0);
+    c10.get_spacial_coords(&x, &y);
+    c10.temp[0] = Area::T0(x, y);
+    children.push_back(c10);
+
+    CellIndex ci11 = ((CellIndex)(*this)).get_child(Child::cRU);
+    Cell c11 = Cell(ci11, 0.0);
+    c11.get_spacial_coords(&x, &y);
+    c11.temp[0] = Area::T0(x, y);
+    children.push_back(c11);
+
+    return children;
+}
 
 LinearTree::LinearTree(string filename) {
     // todo
 }
 
-LinearTree::LinearTree(int base_level, int max_level, double (*Temp_func)(double, double)) {
+LinearTree::LinearTree(double (*Temp_func)(double, double)) {
     
-    base_lvl = base_level;
-    max_lvl  = max_level;
-
-    base_sz  = pow(2, base_lvl);
-    base_dx  = (Area::x_end - Area::x_start) / base_sz;
-
-    int max_sz = pow(2, max_lvl);
-    min_dx  = (Area::x_end - Area::x_start) / max_sz;
+    max_present_lvl = base_lvl;
 
     int global_i_start = 0;
     int global_i_stop  = 1 << (max_lvl*2);
     int global_i_step  = 1 << (2*max_lvl - 2*base_lvl);
 
-    // int my_i_start = offsetG * global_i_step;
-    // int my_i_stop = my_i_start + procG * (global_i_step);
-    int my_i_start = global_i_start;
-    int my_i_stop  = global_i_stop;
-
-    /* std::cout << mpiInfo.comm_rank <<  
-        " global_i_start=" << global_i_start <<
-        " global_i_stop=" << global_i_stop <<
-        " global_i_step=" << global_i_step <<
-        " my_i_start=" << my_i_start <<
-        " my_i_stop=" << my_i_stop << std::endl; */
-
-    
-    for (int i = my_i_start; i < my_i_stop; i += global_i_step) {
-        tree.cells.push_back(Cell(base_lvl, i));
+    for (int i = global_i_start; i < global_i_stop; i += global_i_step) {
+        Cell c = Cell(base_lvl, i);
+        double x, y;
+        c.get_spacial_coords(&x, &y);
+        c.temp[0] = Temp_func(x, y);
+        cells.push_back(c);
     }
-
-    // fill metaInfo (пока вообще обмен не нужен, но если загружать сетку извне, то будет нужно)
-    // meta = new MetaInfo[mpiInfo.comm_size];
-    // meta[mpiInfo.comm_rank] = MetaInfo{ my_i_start, my_i_stop - global_i_step, procG };
-    // MPI_Allgather(&meta[mpiInfo.comm_rank], sizeof(MetaInfo), MPI_CHAR, (void *)meta, sizeof(MetaInfo), MPI_CHAR, mpiInfo.comm);
-
-    // std::cout << mpiInfo.comm_rank <<  " exchanged meta  ";
-    // for (int i = 0; i < mpiInfo.comm_size; i++) {
-    //     std::cout << meta[i].toString() << " | ";
-    // }
 }
-
-
-
-// int LinearTree::FindCell(int lvl, int i, int j) {
-//     GlobalNumber_t target = merge_ints(i, j);
-//     return FindCell(target);
-// }
 
 int LinearTree::FindCell(GlobalNumber_t target, Cell *cell) {
     // binary search
@@ -562,4 +581,156 @@ int LinearTree::FindCell(GlobalNumber_t target, Cell *cell) {
 		}
 	}
 	return -1;
+}
+
+int LinearTree::MarkToRefine() {
+    cout << "MarkToRefine start\n";
+    
+    if (max_present_lvl == max_lvl) {
+        return 0;
+    }
+
+    double refine_thresholds[] = {0, 0, 0, 0, 0, 10, 20, 30, 40, 50};
+
+    int n_of_marks = 0;
+
+    for (int i = 0; i < cells.size(); i++) {
+        Cell c = cells[i];
+
+        if (c.is_border()) {
+            continue;
+        }
+
+        // vector<GlobalNumber_t> neighs = c.get_all_possible_neighbours_ids();
+        // vector<double> vals = get_square_vals(neighs);
+        double grad = 0.0;
+        // double grad = get_grad(vals[0],  vals[1],  vals[2],
+        //                        vals[3], c.temp[0], vals[4],
+        //                        vals[5],  vals[6],  vals[7]);
+
+        // if (grad > refine_thresholds[c.lvl]) {
+        //     cells[i].refine_mark = 1;
+        //     n_of_marks++;
+        // }
+        double x, y;
+        c.get_spacial_coords(&x, &y);
+
+        if ((max_present_lvl == base_lvl) && (Area::Refine1(x, y))) {
+            cells[i].mark_to_refine();
+            cells[i].temp[0] = 100;
+            cout << int(cells[i].refine_mark)  << " ";
+            n_of_marks++;
+        }
+
+        if ((max_present_lvl == base_lvl + 1) && (Area::Refine2(x, y))) {
+            cells[i].refine_mark = char(1);
+            n_of_marks++;
+        }
+
+        if ((max_present_lvl == base_lvl + 2) && (Area::Refine3(x, y))) {
+            cells[i].refine_mark = 1;
+            n_of_marks++;
+        }
+
+    }
+
+    cout << "N_OF_MARKS=" << n_of_marks << endl;
+    cout << "MarkToRefine end\n";
+    return (n_of_marks > 0);
+}
+
+// по методу Базарова (из анализа изображений)
+double H1[3][3] = {
+    { 1,  2,  1},
+    { 0,  0,  0},
+    {-1, -2, -1}};
+
+double H2[3][3] = {
+    {-1, 0, 1},
+    {-2, 0, 2},
+    {-1, 0, 1}};
+
+double get_grad(double w00, double w01, double w02,
+                double w10, double w11, double w12,
+                double w20, double w21, double w22, double dx) {
+    // H1 * W
+    double S1 = (w00 + 2*w01 + w02) - (w20 + 2*w21 + w22);
+    // H2 * W
+    double S2 =  (w02 + 2*w12 + w22) - (w00 + 2*w10 + w20);
+    // модуль градиента
+    double G = 1 / (8*dx) * sqrt(S1*S1 + S2*S2);
+
+    return G;
+}
+
+void LinearTree::DoRefine() {
+    int i = 0;
+    cout << "DoRefine start\n";
+    while (i < cells.size()) {
+        Cell c = cells[i];
+        // cout << "i=" << i << " Cell(" << c.lvl << ", " << c.i << "," << c.j << ", " << c.temp[0] << ")";
+        if (c.refine_mark) {
+            cells.erase(cells.begin()+i);
+
+            vector<Cell> new_cells = c.split();
+            // if (i < 200) {
+            //     cout << "Cell(" << c.lvl << ", " << c.i << "," << c.j << ", " << c.temp[0] << ") --> ";
+            //     cout << "Cell(" << new_cells[0].lvl << ", " << new_cells[0].i << "," << new_cells[0].j << ", " << new_cells[0].temp[0] << ")  ";
+            //     cout << "Cell(" << new_cells[1].lvl << ", " << new_cells[1].i << "," << new_cells[1].j << ", " << new_cells[1].temp[0] << ")  ";
+            //     cout << "Cell(" << new_cells[2].lvl << ", " << new_cells[2].i << "," << new_cells[2].j << ", " << new_cells[2].temp[0] << ")  ";
+            //     cout << "Cell(" << new_cells[3].lvl << ", " << new_cells[3].i << "," << new_cells[3].j << ", " << new_cells[3].temp[0] << ")  ";
+            // }
+
+            cells.insert(cells.begin()+(i), new_cells.begin(), new_cells.end());
+            i += 4;
+            
+        } else {
+            i++;
+        }
+    }
+
+    max_present_lvl++;
+    cout << "DoRefine end\n";
+}
+
+void LinearTree::Balance21() {
+
+}
+
+void LinearTree::Write(string filename) {
+    vector<char> buf = GenWriteStruct();
+    int len = buf.size();
+
+    std::ofstream fout(filename, std::ios::out | std::ios::binary);
+    fout.write(&buf[0], len);
+    fout.close();
+}
+
+vector<char> LinearTree::GenWriteStruct() {
+    vector<char> buf;
+    std::cout << " gen structs for write start\n";
+    for (Cell c: cells) {
+        char *tmp = (char *)(&c.lvl);
+        for (int i = 0; i < sizeof(int); i++) {
+            buf.push_back(tmp[i]);
+        }
+        tmp = (char *)(&c.i);
+        for (int i = 0; i < sizeof(int); i++) {
+            buf.push_back(tmp[i]);
+        }
+        tmp = (char *)(&c.j);
+        for (int i = 0; i < sizeof(int); i++) {
+            buf.push_back(tmp[i]);
+        }
+        if (c.temp[0] > 1) {
+            // std::cout << (c.temp[0] > 5) << std::endl;
+        }
+        
+        tmp = (char *)(&c.temp[0]);
+        for (int i = 0; i < sizeof(double); i++) {
+            buf.push_back(tmp[i]);
+        }
+    }
+    std::cout << " gen structs for write finished\n";
+    return buf;
 }

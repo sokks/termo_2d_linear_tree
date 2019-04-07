@@ -2,8 +2,6 @@
 #include <fstream>
 #include <vector>
 
-// #include "proc/proc.h"
-
 using namespace std;
 
 
@@ -12,8 +10,6 @@ struct WriteCell {
     double temp;
 };
 
-// vector<Cell> to_cells(char *tail_buffer, int tail_len, char *buffer, int buf_cells_end);
-// vector<Cell> to_cells(vector<unsigned char> buf);
 void copy_buf(char *from_buf, int from_start, int from_end, 
               char *to_buf,   int to_start,   int to_end);
 void write_txt_cells(vector<WriteCell> cells);
@@ -75,39 +71,10 @@ vector<WriteCell> to_write_cells(vector<char> buf) {
     return ret;
 }
 
-// vector<Cell> to_cells(vector<unsigned char> buf) {
-//     Cell *c = (Cell*) &buf[0];
-//     vector<Cell> ret;
-//     for (int i = 0; i < buf.size()/sizeof(Cell); i++) {
-//         ret.push_back(c[i]);
-//     }
-//     return ret;
-// }
-
 void write_txt_cells(vector<WriteCell> cells) {
     for (WriteCell c: cells) {
         fout << c.lvl << "," << c.i << "," << c.j << "," << c.temp << endl;
     }
 }
 
-// vector<Cell> to_cells(char *tail_buffer, int tail_len, char *buffer, int buf_cells_end) {
-//     copy_buf(buffer, 0, buf_cells_end, tail_buffer, tail_len, -1);
-//     int cells_len = tail_len + buf_cells_end;
-//     Cell *c = (Cell*)tail_buffer;
-    
-//     vector<Cell> ret;
-//     for (int i = 0; i < cells_len/sizeof(Cell); i++) {
-//         ret.push_back(c[i]);
-//     }
-
-//     return ret;
-// }
-
-// void copy_buf(char *from_buf, int from_start, int from_end, 
-//               char *to_buf,   int to_start,   int to_end) {
-//     int to_i   = to_start;
-//     for (int from_i = from_start; from_i < from_end; from_i++, to_i++) {
-//         to_buf[to_i] = from_buf[from_i];
-//     }
-// }
 

@@ -30,4 +30,8 @@ namespace Area {
 
     extern int max_grid_levels;
     extern double refine_thresholds[];
+
+    int Refine1(double x, double y);
+    int Refine2(double x, double y);
+    int Refine3(double x, double y);
 }
