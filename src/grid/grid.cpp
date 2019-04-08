@@ -547,12 +547,12 @@ void Cell::get_border_cond(char *cond_type, double (**cond_func)(double, double,
     }
 
     if (is_down_border()) { 
-        Area::get_border_cond(Area::Border::UP, cond_type, cond_func);
+        Area::get_border_cond(Area::Border::DOWN, cond_type, cond_func);
         return;
     }
 
     if (is_upper_border()) { 
-        Area::get_border_cond(Area::Border::DOWN, cond_type, cond_func);
+        Area::get_border_cond(Area::Border::UP, cond_type, cond_func);
         return;
     }
 
@@ -623,7 +623,9 @@ int LinearTree::FindCell(GlobalNumber_t target, Cell *cell) {
         GlobalNumber_t val = mid.get_global_number();
 		if (val == target) {
 			// return midi;
-            *cell = mid;
+            if (cell != nullptr) {
+                *cell = mid;
+            }
             return midi;
 		}
         if (val < target) {

@@ -418,7 +418,7 @@ int Proc::BuildGhosts() {
 
     std::cout << mpiInfo.comm_rank << " ghosts buffers built\n";
 
-    // if (FULL_DEBUG) {
+    if (FULL_DEBUG) {
         cout << mpiInfo.comm_rank << " GHOSTS={ ";
         for (int n = 0; n < mpiInfo.comm_size; n++) {
             cout << "[ ";
@@ -428,7 +428,7 @@ int Proc::BuildGhosts() {
             cout << "] ";
         }
         cout << "}\n";
-    // }
+    }
 
 
     stat.timers["build_ghosts"].Stop();
@@ -449,7 +449,7 @@ int Proc::find_owner(GlobalNumber_t cell_id) {
 
 int Proc::ExchangeGhosts() {
     
-
+    cout << mpiInfo.comm_rank << " ExchangeGhosts started\n";
     stat.timers["exchange_ghosts"].Start();
 
     int temp_l_corr = time_step_n % 2; // чтобы брать значение temp[0] или temp[1]
@@ -464,8 +464,8 @@ int Proc::ExchangeGhosts() {
         if ( (n != mpiInfo.comm_rank) && (ghosts_out_ids[n].size() > 0) ) {
             // fill out temps for n
             for (int i = 0; i < ghosts_out_ids[n].size(); i++) {
-                Cell *c;
-                int idx = mesh.FindCell(ghosts_out_ids[n][i], c);
+                Cell c;
+                int idx = mesh.FindCell(ghosts_out_ids[n][i], &c);
                 if (idx == -1) {
                     cout << "[ERROR] exchange ghosts cell not found but have to\n";
                 }
@@ -494,7 +494,22 @@ int Proc::ExchangeGhosts() {
     
     MPI_Waitall(active_neighs_num, send_reqs, send_statuses);
 
+
+    if (FULL_DEBUG) {
+        cout << mpiInfo.comm_rank << " GHOSTS={ ";
+        for (int n = 0; n < mpiInfo.comm_size; n++) {
+            cout << "[ ";
+            for (int i = 0; i < ghosts_in[n].cells.size(); i++) {
+                cout << "(" << ghosts_in[n].cells[i].lvl << "," << ghosts_in[n].cells[i].i << "," << ghosts_in[n].cells[i].j << ": " <<  ghosts_in[n].cells[i].temp[cur_temp_idx] << ") ";
+            }
+            cout << "] ";
+        }
+        cout << "}\n";
+    }
+
+
     stat.timers["exchange_ghosts"].Stop();
+    cout << mpiInfo.comm_rank << " ExchangeGhosts finished\n";
     return 0;
 }
 
@@ -512,13 +527,20 @@ void Proc::FillStart(double (*start_func)(double, double)) {
 
 
 void Proc::MakeStep() {
+
+    // usleep(10000000);
+
     stat.timers["step"].Start();
     int temp_l_corr = time_step_n % 2; // чтобы брать значение temp[0] или temp[1]
     int cur_temp_idx = temp_l_corr;
     int next_temp_idx = (temp_l_corr + 1) % 2;
-    time_step_n++;
 
     ExchangeGhosts();
+
+    PrintMyCells();
+    PrintGhostCells();
+
+    time_step_n++;
 
     for (int i = 0; i < mesh.cells.size(); i++) {
         char border_cond_type;
@@ -566,7 +588,7 @@ void Proc::MakeStep() {
                 neigh_cell.get_spacial_coords(&neigh_x, &neigh_y);
                 double flow = (neigh_cell.temp[cur_temp_idx] - cell.temp[cur_temp_idx]) / dist(x, y, neigh_x, neigh_y);
                 if (cell.lvl != neigh_cell.lvl) {
-                    flow *= 0.3 * sqrt(10);
+                    flow *= 0.3 * sqrt(10); // по формуле расстояния между центрами
                 }
                 termo_flows.push_back(flow);
             }
@@ -577,9 +599,11 @@ void Proc::MakeStep() {
             }
 
             new_T = cell.temp[cur_temp_idx] + flows_sum / cell.get_S() + Area::Q(x, y, tau * time_step_n);
+            new_T = tau * time_step_n;
 
         } else if (border_cond_type == 1) {
             new_T = cond_func(x, y, time_step_n * tau); // ? в центрах ячеек по-другому считается?
+            new_T = - tau * time_step_n;
         } else if (border_cond_type == 2) {
             std::cout << "border cond type = 2 not implemented\n";
             // not imptemented
@@ -634,3 +658,31 @@ int Proc::WaitallGhosts() {
 }
 
 // void MPI_Allgather_wrapper()
+
+void Proc::PrintMyCells() {
+
+    int temp_l_corr = time_step_n % 2; // чтобы брать значение temp[0] или temp[1]
+    int cur_temp_idx = temp_l_corr;
+
+    cout << mpiInfo.comm_rank << " CELLS={ ";
+    for (int i = 0; i < mesh.cells.size(); i++) {
+        cout << "(" << mesh.cells[i].lvl << "," << mesh.cells[i].i << "," << mesh.cells[i].j << ": " <<  mesh.cells[i].temp[cur_temp_idx] << ") ";
+    }
+    cout << "}\n";
+}
+
+void Proc::PrintGhostCells() {
+
+    int temp_l_corr = time_step_n % 2; // чтобы брать значение temp[0] или temp[1]
+    int cur_temp_idx = temp_l_corr;
+
+    cout << mpiInfo.comm_rank << " GHOSTS={ ";
+        for (int n = 0; n < mpiInfo.comm_size; n++) {
+            cout << n << ":[ ";
+            for (int i = 0; i < ghosts_in[n].cells.size(); i++) {
+                cout << "(" << ghosts_in[n].cells[i].lvl << "," << ghosts_in[n].cells[i].i << "," << ghosts_in[n].cells[i].j << ": " <<  ghosts_in[n].cells[i].temp[cur_temp_idx] << ") ";
+            }
+            cout << "] ";
+        }
+        cout << "}\n";
+}

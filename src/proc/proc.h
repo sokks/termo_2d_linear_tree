@@ -149,6 +149,9 @@ private:
     int IRecvGhosts();
     int WaitallGhosts();
 
+    void PrintMyCells();
+    void PrintGhostCells();
+
 // запрещаем копирование
     Proc(Proc&);
     Proc& operator=(Proc&);
