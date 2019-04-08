@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include <mpi.h>
 #include <math.h>
@@ -129,7 +131,9 @@ struct LinearTree {
     void Balance21();
 
     void Write(string filename);
+    void WriteOffsets(string filename, int n_of_procs);
     vector<char> GenWriteStruct();
+    void GenFromWriteStruct(vector<char>&);
 
 };
 

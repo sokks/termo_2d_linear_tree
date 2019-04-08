@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "../area/area.h"
+#include "../grid/grid.h"
 
 using std::vector;
 using std::map;
@@ -58,6 +59,28 @@ struct MetaInfo {
     string toString();
 };
 
+struct FullMeta {
+    vector<GlobalNumber_t> metas;
+    int one_meta_len = sizeof(GlobalNumber_t) * 3;
+
+    FullMeta(){}
+
+    FullMeta(MetaInfo my_meta, int n_procs, int my_rank) {
+        metas = vector<GlobalNumber_t>(n_procs * 3);
+        metas[my_rank*3]   = my_meta.procStart;
+        metas[my_rank*3+1] = my_meta.procEnd;
+        metas[my_rank*3+2] = my_meta.procG;
+    }
+
+    MetaInfo GetMetaOfProc(int proc_n) {
+        MetaInfo m;
+        m.procStart = metas[proc_n*3];
+        m.procEnd   = metas[proc_n*3+1];
+        m.procG     = metas[proc_n*3+2];
+        return m;
+    }
+};
+
 class Proc {
     MpiInfo mpiInfo;
     Stat    stat;
@@ -68,8 +91,8 @@ class Proc {
     GlobalNumber_t totalG;
     GlobalNumber_t procG;
     GlobalNumber_t offsetG;
-    MetaInfo *meta = nullptr;
-    LinearTree tree;
+    FullMeta meta;
+    LinearTree mesh;
 
     LinearTree *ghosts_in = nullptr;
     LinearTree *ghosts_out = nullptr;
@@ -84,7 +107,7 @@ public:
 
     /// InitMesh создает базовую структуру сетки
     int InitMesh();
-    int InitMesh(string filename);
+    int InitMesh(string offsets_filename, string cells_filename);
 
     /// MarkToRefine
     void MarkToRefine();

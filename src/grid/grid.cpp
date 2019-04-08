@@ -706,6 +706,24 @@ void LinearTree::Write(string filename) {
     fout.close();
 }
 
+void LinearTree::WriteOffsets(string filename, int n_of_procs) {
+    int one_sz = 3 * sizeof(int) + sizeof(double);
+    
+    vector<int> offsets;
+    int sum = 0;
+    for (int i = 0; i < n_of_procs-1; i++) {
+        offsets.push_back(sum * one_sz);
+        sum += cells.size() / n_of_procs;
+        offsets.push_back(sum * one_sz);
+    }
+    offsets.push_back(sum * one_sz);
+    offsets.push_back((cells.size() - sum) * one_sz);
+
+    std::ofstream fout(filename, std::ios::out | std::ios::binary);
+    fout.write((char *)&offsets[0], offsets.size() * sizeof(int));
+    fout.close();
+}
+
 vector<char> LinearTree::GenWriteStruct() {
     vector<char> buf;
     std::cout << " gen structs for write start\n";
@@ -733,4 +751,38 @@ vector<char> LinearTree::GenWriteStruct() {
     }
     std::cout << " gen structs for write finished\n";
     return buf;
+}
+
+void LinearTree::GenFromWriteStruct(vector<char>& buf) {
+    max_present_lvl = base_lvl;
+
+    int one_sz = 3 * sizeof(int) + sizeof(double);
+
+    char *p = &buf[0];
+    int pos = 0;
+
+    int lvl_offset = 0;
+    int i_offset = sizeof(int);
+    int j_offset = 2 * sizeof(int);
+    int temp_offset = 3 * sizeof(int);
+
+    while (pos < buf.size()) {
+        Cell c;
+        c.lvl  = * ((int *)(&p[pos+lvl_offset]));
+        c.i    = * ((int *)(&p[pos+i_offset]));
+        c.j    = * ((int *)(&p[pos+j_offset]));
+        c.temp[0] = * ((double *)(&(p[pos+temp_offset])));
+        c.refine_mark = 0;
+        cells.push_back(c);
+
+        // std::cout << "cell pushed pos=" << pos << endl; 
+        if (c.lvl > max_present_lvl) {
+            max_present_lvl = c.lvl;
+        }
+
+        pos += one_sz;
+    }
+
+    cout << "first cell = Cell(" << cells[0].lvl << ", " << cells[0].i << "," << cells[0].j << ", " << cells[0].temp[0] << ")";
+    cout << "last cell = Cell(" << cells[cells.size()-1].lvl << ", " << cells[cells.size()-1].i << "," << cells[cells.size()-1].j << ", " << cells[cells.size()-1].temp[0] << ")";
 }

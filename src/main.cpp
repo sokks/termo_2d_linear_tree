@@ -7,9 +7,6 @@ bool WRITE_LAYERS = true;
 int write_freq = 1000;
 string baseFolderTemp = "data/temp/";
 
-int refine_freq = 1000;
-string baseFolderRefine = "data/refine/";
-
 string gen_filename(string baseFolder, int n) {
     string num = std::to_string(n);
     int max = 6;
@@ -21,24 +18,24 @@ string gen_filename(string baseFolder, int n) {
 
 
 int main(int argc, char **argv) {
-    if (argc < 3) {
-        std::cout << "usage: prog <BaseSize> <TimeSteps>\n";
+    if (argc < 6) {
+        std::cout << "usage: prog <base_lvl> <max_lvl> <offsets_file> <grid_file> <time_steps>\n";
         return 0;
     }
-    int base_sz, ts_n;
-    base_sz = std::atoi(argv[1]);
-    ts_n    = std::atoi(argv[2]);
+    int    base_level = atoi(argv[1]);
+    int    max_level  = atoi(argv[2]);
+    string offsets_file  = argv[3];
+    string grid_file  = argv[4];
+    int    ts_n       = std::atoi(argv[5]);
 
-    Init(base_sz, ts_n);    
+    GridInit(base_level, max_level);    
 
     Proc p;
     p.MPIInit(argc, argv);
     
-    p.InitMesh();
-    p.FillStart(&Area::T0);
-    p.MarkToRefine();
-    p.Refine();
-    p.LoadBalance();
+    p.InitMesh(offsets_file, grid_file);
+
+    // p.FillStart(&Area::T0); // считывается из файла
 
     p.BuildGhosts();
     for (int k = 0; k < ts_n; k++) {

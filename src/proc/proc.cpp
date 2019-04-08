@@ -5,13 +5,8 @@ using std::map;
 using std::string;
 using std::sort;
 
-
-// описание сетки
-int    base_sz  = 64;
-double base_dx  = 0.1;
-double min_dx   = 0.1;
-int    max_lvl  = 10;
-int    base_lvl = 10;
+using std::cout;
+using std::endl;
 
 double base_tau = 0.001;
 double      tau = 0.001;
@@ -78,9 +73,6 @@ Proc::Proc() {
 }
 
 Proc::~Proc() {
-    if (meta != nullptr) {
-        delete[] meta;
-    }
 
     if (ghosts_in != nullptr) {
         delete[] ghosts_in;
@@ -130,18 +122,11 @@ int Proc::InitMesh() {
         " my_i_stop=" << my_i_stop << std::endl;
 
     for (int i = my_i_start; i < my_i_stop; i += global_i_step) {
-        tree.cells.push_back(Cell(base_lvl, i));
+        mesh.cells.push_back(Cell(base_lvl, i));
     }
 
     // fill metaInfo (пока вообще обмен не нужен, но если загружать сетку извне, то будет нужно)
-    meta = new MetaInfo[mpiInfo.comm_size];
-    meta[mpiInfo.comm_rank] = MetaInfo{ my_i_start, my_i_stop - global_i_step, procG };
-    MPI_Allgather(&meta[mpiInfo.comm_rank], sizeof(MetaInfo), MPI_CHAR, (void *)meta, sizeof(MetaInfo), MPI_CHAR, mpiInfo.comm);
-
-    std::cout << mpiInfo.comm_rank <<  " exchanged meta  ";
-    for (int i = 0; i < mpiInfo.comm_size; i++) {
-        std::cout << meta[i].toString() << " | ";
-    }
+    
 
     // todo set tau using min dx
 
@@ -150,19 +135,60 @@ int Proc::InitMesh() {
     return 0;
 }
 
+int Proc::InitMesh(string offsets_filename, string cells_filename) {
+    stat.timers["init_mesh"] = MpiTimer();
+    stat.timers["init_mesh"].Start();
 
-int Proc::find_owner(GlobalNumber_t cell_id) {
+    // [0] - offset, [1] - len
+    int range[2];
+    int one_sz = 3 * sizeof(int) + sizeof(double);
+
+    MPI_File fh;
+    MPI_File_open( mpiInfo.comm, offsets_filename.c_str(), MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
+    MPI_File_read_at(fh, mpiInfo.comm_rank * sizeof(int), &range, 2, MPI_INT, MPI_STATUS_IGNORE);
+    MPI_File_close(&fh);
+
+    std::cout << mpiInfo.comm_rank << " read range[0]=" << range[0] << " range[1]=" << range[1] << std::endl;
+
+    vector<char> buffer(range[1], 1);
+    std::cout << "will read cells file\n";
+
+    MPI_File_open( mpiInfo.comm, cells_filename.c_str(), MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
+    MPI_File_read_at(fh, range[0], &buffer[0], range[1]-1, MPI_CHAR, MPI_STATUS_IGNORE);
+    MPI_File_close(&fh);
+
+    std::cout << "read cells file buffer.size()=" << buffer.size() << std::endl;
+    cout << mpiInfo.comm_rank << " buf[0]=" << int(buffer[0]) << endl;
+
+    mesh.GenFromWriteStruct(buffer);
+
+    stat.timers["init_mesh"].Stop();
+    std::cout << mpiInfo.comm_rank <<  " MESH INITED   " <<
+                 "n_of_cells=" << mesh.cells.size() <<
+                " cells_offset=" << range[0] / one_sz << std::endl;
+    
+
+    MetaInfo my_meta;
+    my_meta.procStart = mesh.cells[0].get_global_number();
+    my_meta.procEnd   = mesh.cells[mesh.cells.size()-1].get_global_number();
+    my_meta.procG     = mesh.cells.size();
+
+    cout << mpiInfo.comm_rank << " my_meta={" << my_meta.procStart << "," << my_meta.procEnd << "," << my_meta.procG << "}\n";
+
+    meta = FullMeta(my_meta, mpiInfo.comm_size, mpiInfo.comm_rank);
+
+
+    // cout << mpiInfo.comm_rank << " sizeof(my_meta)=" << sizeof(MetaInfo) << " sizeof(meta)=" << meta.size() * sizeof(meta) << endl;
+    MPI_Allgather(&meta.metas[mpiInfo.comm_rank*3], meta.one_meta_len, MPI_CHAR, &meta.metas[0], meta.one_meta_len, MPI_CHAR, mpiInfo.comm);
+
+    std::cout << mpiInfo.comm_rank <<  " exchanged meta  ";
     for (int i = 0; i < mpiInfo.comm_size; i++) {
-        if (meta[i].procStart > cell_id) {
-            return (i-1);
-        }
+        std::cout << meta.GetMetaOfProc(i).toString() << " | ";
     }
-    if (meta[mpiInfo.comm_size].procStart <= cell_id) {
-        return mpiInfo.comm_size;
-    }
-    // std::cout << "owner not found for cell_id=" << cell_id << std::endl;
-    return -1;
+    
+    return 0;
 }
+
 
 void Proc::MarkToRefine() {
     // not implemented
@@ -178,6 +204,7 @@ int Proc::LoadBalance() {
     return 0;
 }
 
+
 int Proc::BuildGhosts() {
     stat.timers["build_ghosts"].Start();
     // TODO 1
@@ -185,10 +212,10 @@ int Proc::BuildGhosts() {
     ghosts_in = new LinearTree[mpiInfo.comm_size];
     ghosts_out = new LinearTree[mpiInfo.comm_size];
 
-    for (Cell c: tree.cells) {
+    for (Cell c: mesh.cells) {
         vector<Cell> neighs;
         
-        vector<GlobalNumber_t> neigh_ids = c.get_all_possible_neighbours_ids(stat.timers["sort_neighs"]);
+        vector<GlobalNumber_t> neigh_ids = c.get_all_possible_neighbours_ids();
 
         // find their owners
         for (GlobalNumber_t neigh: neigh_ids) {
@@ -210,13 +237,28 @@ int Proc::BuildGhosts() {
     return 0;
 }
 
+int Proc::find_owner(GlobalNumber_t cell_id) {
+    for (int i = 0; i < mpiInfo.comm_size; i++) {
+        if (meta.GetMetaOfProc(i).procStart > cell_id) {
+            return (i-1);
+        }
+    }
+    if (meta.GetMetaOfProc(mpiInfo.comm_size).procStart <= cell_id) {
+        return mpiInfo.comm_size;
+    }
+    // std::cout << "owner not found for cell_id=" << cell_id << std::endl;
+    return -1;
+}
+
+
+
 void Proc::FillStart(double (*start_func)(double, double)) {
     double x, y;
-    for (int i = 0; i < tree.cells.size(); i++) {
-        tree.cells[i].get_spacial_coords(&x, &y);
+    for (int i = 0; i < mesh.cells.size(); i++) {
+        mesh.cells[i].get_spacial_coords(&x, &y);
         
-        tree.cells[i].temp[0] = start_func(x, y);
-        std::cout << mpiInfo.comm_rank << " cell(" << tree.cells[i].lvl << ", " << tree.cells[i].i << ", " << tree.cells[i].j << "): (" << x << ", " << y << ") --> " << tree.cells[i].temp[0] << "\n";
+        mesh.cells[i].temp[0] = start_func(x, y);
+        std::cout << mpiInfo.comm_rank << " cell(" << mesh.cells[i].lvl << ", " << mesh.cells[i].i << ", " << mesh.cells[i].j << "): (" << x << ", " << y << ") --> " << mesh.cells[i].temp[0] << "\n";
     }
 
     std::cout << mpiInfo.comm_rank << " filled start at temp[0]\n";
@@ -230,10 +272,10 @@ void Proc::MakeStep() {
 
     // todo exchange ghosts
 
-    for (int i = 0; i < tree.cells.size(); i++) {
+    for (int i = 0; i < mesh.cells.size(); i++) {
         char border_cond_type;
         double (*cond_func)(double, double, double);
-        Cell cell = tree.cells[i];
+        Cell cell = mesh.cells[i];
         stat.timers["get_border_cond"].Start();
         cell.get_border_cond(&border_cond_type, &cond_func);
         stat.timers["get_border_cond"].Stop();
@@ -247,7 +289,7 @@ void Proc::MakeStep() {
             vector<double> termo_flows;
 
             stat.timers["get_possible_neighs"].Start();
-            vector<GlobalNumber_t> possible_neigh_ids = cell.get_all_possible_neighbours_ids(stat.timers["sort_neighs"]);
+            vector<GlobalNumber_t> possible_neigh_ids = cell.get_all_possible_neighbours_ids();
             stat.timers["get_possible_neighs"].Stop();
             for (GlobalNumber_t id: possible_neigh_ids) {
                 int owner = find_owner(id);
@@ -259,7 +301,7 @@ void Proc::MakeStep() {
                 if (owner == mpiInfo.comm_rank) { // ячейка у меня
                     
                     stat.timers["find_cell"].Start();
-                    int status = tree.FindCell(id, &neigh_cell);
+                    int status = mesh.FindCell(id, &neigh_cell);
                     stat.timers["find_cell"].Stop();
                     if (status == -1) {
                         continue;
@@ -295,7 +337,7 @@ void Proc::MakeStep() {
             // not imptemented
         }
 
-        tree.cells[i].temp[next_temp_idx] = new_T;
+        mesh.cells[i].temp[next_temp_idx] = new_T;
     }
     stat.timers["step"].Stop();
 }
@@ -303,7 +345,7 @@ void Proc::MakeStep() {
 void Proc::WriteT(string filename) {
     stat.timers["io"].Start();
 
-    vector<char> buf = get_write_cells_struct();
+    vector<char> buf = mesh.GenWriteStruct();
     int len = buf.size();
     int *lens = new int[mpiInfo.comm_size];
     stat.timers["communication"].Start();
@@ -325,36 +367,36 @@ void Proc::WriteT(string filename) {
     stat.timers["io"].Stop();
 }
 
-vector<char> Proc::get_write_cells_struct() {
-    vector<char> buf;
-    std::cout << mpiInfo.comm_rank << " gen structs for write start\n";
-    for (auto c: tree.cells) {
-        // int local_sz = sizeof(int) + sizeof(int) + sizeof(int) + sizeof(double); // lvl, i, j, temp[0]
-        // buf.resize(buf.size() + local_sz);
-        char *tmp = (char *)(&c.lvl);
-        for (int i = 0; i < sizeof(int); i++) {
-            buf.push_back(tmp[i]);
-        }
-        tmp = (char *)(&c.i);
-        for (int i = 0; i < sizeof(int); i++) {
-            buf.push_back(tmp[i]);
-        }
-        tmp = (char *)(&c.j);
-        for (int i = 0; i < sizeof(int); i++) {
-            buf.push_back(tmp[i]);
-        }
-        if (c.temp[0] > 1) {
-            std::cout << (c.temp[0] > 5) << std::endl;
-        }
+// vector<char> Proc::get_write_cells_struct() {
+//     vector<char> buf;
+//     std::cout << mpiInfo.comm_rank << " gen structs for write start\n";
+//     for (auto c: mesh.cells) {
+//         // int local_sz = sizeof(int) + sizeof(int) + sizeof(int) + sizeof(double); // lvl, i, j, temp[0]
+//         // buf.resize(buf.size() + local_sz);
+//         char *tmp = (char *)(&c.lvl);
+//         for (int i = 0; i < sizeof(int); i++) {
+//             buf.push_back(tmp[i]);
+//         }
+//         tmp = (char *)(&c.i);
+//         for (int i = 0; i < sizeof(int); i++) {
+//             buf.push_back(tmp[i]);
+//         }
+//         tmp = (char *)(&c.j);
+//         for (int i = 0; i < sizeof(int); i++) {
+//             buf.push_back(tmp[i]);
+//         }
+//         if (c.temp[0] > 1) {
+//             std::cout << (c.temp[0] > 5) << std::endl;
+//         }
         
-        tmp = (char *)(&c.temp[0]);
-        for (int i = 0; i < sizeof(double); i++) {
-            buf.push_back(tmp[i]);
-        }
-    }
-    std::cout << mpiInfo.comm_rank << " gen structs for write finished\n";
-    return buf;
-}
+//         tmp = (char *)(&c.temp[0]);
+//         for (int i = 0; i < sizeof(double); i++) {
+//             buf.push_back(tmp[i]);
+//         }
+//     }
+//     std::cout << mpiInfo.comm_rank << " gen structs for write finished\n";
+//     return buf;
+// }
 
 void Proc::WriteStat(string filename) {
     std::cout << "MpiInfo: " << mpiInfo.toString() << std::endl;
