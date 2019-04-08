@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <unistd.h>
 
 #include "../area/area.h"
 #include "../grid/grid.h"
@@ -94,8 +95,12 @@ class Proc {
     FullMeta meta;
     LinearTree mesh;
 
-    LinearTree *ghosts_in = nullptr;
-    LinearTree *ghosts_out = nullptr;
+    vector<GlobalNumber_t> *ghosts_out_ids = nullptr;
+    LinearTree *ghosts_in  = nullptr;
+    vector<double> *ghosts_in_temps  = nullptr;
+    vector<double> *ghosts_out_temps = nullptr;
+
+    int active_neighs_num = 0;
 
 public:
     Proc();
@@ -122,6 +127,8 @@ public:
 
     // BuildGhosts строит структуры для обмена границами
     int BuildGhosts();
+    // ExchangeGhosts обменивается с соседями
+    int ExchangeGhosts();
 
     // FillStart заполняет начальные заначения температуры
     void FillStart(double (*start_func)(double, double));

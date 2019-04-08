@@ -119,7 +119,7 @@ struct LinearTree {
 
     vector<Cell> cells;
 
-    LinearTree() {}
+    LinearTree(int reserved_size=0) { cells = vector<Cell>(reserved_size); max_present_lvl = 0; }
     LinearTree(string filename);
     LinearTree(double (*Temp_func)(double, double));
 

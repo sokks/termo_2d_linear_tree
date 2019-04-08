@@ -1,7 +1,8 @@
 COMPILER=mpicxx
+OPTS=-O0
 
-BASE_LVL=6
-MAX_LVL=9
+BASE_LVL=8
+MAX_LVL=11
 
 N_PROCS=2
 
@@ -52,37 +53,37 @@ bin/test: build/main.o build/area.o build/grid.o build/proc.o Makefile
 
 build/main.o: src/main.cpp Makefile
 	mkdir -p build
-	$(COMPILER) -std=c++11 -o $@ -c src/main.cpp
+	$(COMPILER) -std=c++11 $(OPTS) -o $@ -c src/main.cpp
 
 
 bin/gen_grid: build/gen_grid.o build/grid.o build/area.o Makefile
 	mkdir -p bin
-	$(COMPILER) -std=c++11 -o $@ build/gen_grid.o build/grid.o build/area.o
+	$(COMPILER) -std=c++11 $(OPTS) -o $@ build/gen_grid.o build/grid.o build/area.o
 
 build/gen_grid.o: src/gen_grid.cpp Makefile
 	mkdir -p build
-	$(COMPILER) -std=c++11 -o $@ -c src/gen_grid.cpp
+	$(COMPILER) -std=c++11 $(OPTS) -o $@ -c src/gen_grid.cpp
 
 
 bin/translate: build/translate.o Makefile
-	$(COMPILER) -std=c++11 -o $@ build/translate.o
+	$(COMPILER) -std=c++11 $(OPTS) -o $@ build/translate.o
 
 build/translate.o: src/translate.cpp Makefile
 	mkdir -p build
-	$(COMPILER) -std=c++11 -o $@ -c src/translate.cpp
+	$(COMPILER) -std=c++11 $(OPTS) -o $@ -c src/translate.cpp
 
 
 build/grid.o: src/grid/grid.h src/grid/grid.cpp Makefile
 	mkdir -p build
-	$(COMPILER) -std=c++11 -o $@ -c src/grid/grid.cpp 
+	$(COMPILER) -std=c++11 $(OPTS) -o $@ -c src/grid/grid.cpp 
 
 build/proc.o: src/proc/proc.h src/proc/proc.cpp Makefile
 	mkdir -p build
-	$(COMPILER) -std=c++11 -o $@ -c src/proc/proc.cpp 
+	$(COMPILER) -std=c++11 $(OPTS) -o $@ -c src/proc/proc.cpp 
 
 build/area.o: src/area/area.h src/area/area.cpp Makefile
 	mkdir -p build
-	$(COMPILER) -std=c++11 -o $@ -c src/area/area.cpp
+	$(COMPILER) -std=c++11 $(OPTS) -o $@ -c src/area/area.cpp
 
 
 clean:

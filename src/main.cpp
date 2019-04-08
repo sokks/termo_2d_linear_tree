@@ -1,6 +1,8 @@
 #include "proc/proc.h"
 
 using std::string;
+using std::cout;
+using std::endl;
 
 
 bool WRITE_LAYERS = true;
@@ -32,21 +34,30 @@ int main(int argc, char **argv) {
 
     Proc p;
     p.MPIInit(argc, argv);
+
+    cout << "base_level=" << base_level << 
+            " max_level=" << max_level <<
+            " offsets_file=" << offsets_file << 
+            " grid_file=" << grid_file << 
+            " ts_n=" << ts_n << endl;
     
     p.InitMesh(offsets_file, grid_file);
 
-    // p.FillStart(&Area::T0); // считывается из файла
+    // usleep(10000000);
 
     p.BuildGhosts();
-    for (int k = 0; k < ts_n; k++) {
-        if (WRITE_LAYERS && (k%write_freq ==0)) {
-            p.WriteT(gen_filename(baseFolderTemp, k));
-        }
-        p.MakeStep();
-    }
 
-    p.WriteT(gen_filename(baseFolderTemp, ts_n));
-    p.WriteStat("data/stat.out");
+    // usleep(10000000);
+
+    // for (int k = 0; k < ts_n; k++) {
+    //     if (WRITE_LAYERS && (k%write_freq ==0)) {
+    //         p.WriteT(gen_filename(baseFolderTemp, k));
+    //     }
+    //     p.MakeStep();
+    // }
+
+    // p.WriteT(gen_filename(baseFolderTemp, ts_n));
+    // p.WriteStat("data/stat.out");
 
     p.MPIFinalize();
 }

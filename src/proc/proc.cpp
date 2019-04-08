@@ -1,5 +1,7 @@
 #include "proc.h"
 
+#define FULL_DEBUG 0
+
 using std::vector;
 using std::map;
 using std::string;
@@ -64,6 +66,7 @@ Proc::Proc() {
     stat.timers["total"].Start();
     stat.timers["io"] = MpiTimer();
     stat.timers["build_ghosts"] = MpiTimer();
+    stat.timers["exchange_ghosts"] = MpiTimer();
     stat.timers["communication"] = MpiTimer();
     stat.timers["find_cell"] = MpiTimer();
     stat.timers["step"] = MpiTimer();
@@ -74,11 +77,19 @@ Proc::Proc() {
 
 Proc::~Proc() {
 
+    cout << mpiInfo.comm_rank << " DESTROYING PROC\n";
+
+    if (ghosts_out_ids != nullptr) {
+        delete[] ghosts_out_ids;
+    }
     if (ghosts_in != nullptr) {
         delete[] ghosts_in;
     }
-    if (ghosts_out != nullptr) {
-        delete[] ghosts_out;
+    if (ghosts_in_temps != nullptr) {
+        delete[] ghosts_in_temps;
+    }
+    if (ghosts_out_temps != nullptr) {
+        delete[] ghosts_out_temps;
     }
 
     stat.timers["total"].Stop();
@@ -145,7 +156,7 @@ int Proc::InitMesh(string offsets_filename, string cells_filename) {
 
     MPI_File fh;
     MPI_File_open( mpiInfo.comm, offsets_filename.c_str(), MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
-    MPI_File_read_at(fh, mpiInfo.comm_rank * sizeof(int), &range, 2, MPI_INT, MPI_STATUS_IGNORE);
+    MPI_File_read_at(fh, 2 * mpiInfo.comm_rank * sizeof(int), &range, 2, MPI_INT, MPI_STATUS_IGNORE);
     MPI_File_close(&fh);
 
     std::cout << mpiInfo.comm_rank << " read range[0]=" << range[0] << " range[1]=" << range[1] << std::endl;
@@ -176,10 +187,11 @@ int Proc::InitMesh(string offsets_filename, string cells_filename) {
     cout << mpiInfo.comm_rank << " my_meta={" << my_meta.procStart << "," << my_meta.procEnd << "," << my_meta.procG << "}\n";
 
     meta = FullMeta(my_meta, mpiInfo.comm_size, mpiInfo.comm_rank);
-
-
-    // cout << mpiInfo.comm_rank << " sizeof(my_meta)=" << sizeof(MetaInfo) << " sizeof(meta)=" << meta.size() * sizeof(meta) << endl;
-    MPI_Allgather(&meta.metas[mpiInfo.comm_rank*3], meta.one_meta_len, MPI_CHAR, &meta.metas[0], meta.one_meta_len, MPI_CHAR, mpiInfo.comm);
+    // for (int i = 0; i < mpiInfo.comm_size * 3; i++) {
+    //     cout << "full_meta[" << i << "]=" << meta.metas[i] << endl;
+    // }
+    // cout << mpiInfo.comm_rank << " sizeof(my_meta)=" << sizeof(MetaInfo) << "sizeof(metas)=" << meta.metas.size() * meta.one_meta_len << endl;
+    MPI_Allgather( (void*)(meta.metas.data() + mpiInfo.comm_rank*3), 3, MPI_LONG_LONG_INT, meta.metas.data(), 3, MPI_LONG_LONG_INT, mpiInfo.comm);
 
     std::cout << mpiInfo.comm_rank <<  " exchanged meta  ";
     for (int i = 0; i < mpiInfo.comm_size; i++) {
@@ -207,50 +219,284 @@ int Proc::LoadBalance() {
 
 int Proc::BuildGhosts() {
     stat.timers["build_ghosts"].Start();
-    // TODO 1
-    // нужна структура, чтобы знать, где искать гостов
-    ghosts_in = new LinearTree[mpiInfo.comm_size];
-    ghosts_out = new LinearTree[mpiInfo.comm_size];
+
+    MPI_Barrier(mpiInfo.comm);
+
+    ghosts_in_temps  = new vector<double>[mpiInfo.comm_size];
+    ghosts_out_temps = new vector<double>[mpiInfo.comm_size];
+
+    ghosts_out_ids = new vector<GlobalNumber_t>[mpiInfo.comm_size];
+    ghosts_in      = new LinearTree[mpiInfo.comm_size];
+
+    cout << mpiInfo.comm_rank << " BuildGhosts here1\n";
 
     for (Cell c: mesh.cells) {
         vector<Cell> neighs;
         
         vector<GlobalNumber_t> neigh_ids = c.get_all_possible_neighbours_ids();
 
+        if (FULL_DEBUG) {
+            cout << mpiInfo.comm_rank << " neigh_ids(" << c.get_global_number() << ")= {sz=" << neigh_ids.size() << "}";
+            for (int i = 0; i < neigh_ids.size(); i++) {
+                cout << neigh_ids[i] << " ";
+            }
+            cout << endl;
+        }
+
         // find their owners
         for (GlobalNumber_t neigh: neigh_ids) {
             int owner = find_owner(neigh);
             if (owner == -1) {
-                // тогда ячейки нет
                 continue;
             }
             if (owner != mpiInfo.comm_rank) {
-                // std::cout << "owner not me\n";
-                // ghosts_in[owner].cells.resize(ghosts_in[owner].cells.size());
-                // ghosts_out[owner].cells.push_back(c); // todo: удалить повторения
+                ghosts_out_ids[owner].push_back(c.get_global_number());
             }
         }
     }
 
-    std::cout << mpiInfo.comm_rank << " ghosts built\n";
+    cout << mpiInfo.comm_rank << " BuildGhosts here2\n";
+
+    // сортируем и удаляем повторения
+    for (int i = 0; i < mpiInfo.comm_size; i++) {
+        std::sort(ghosts_out_ids[i].begin(), ghosts_out_ids[i].end());
+        auto last = std::unique(ghosts_out_ids[i].begin(), ghosts_out_ids[i].end());
+        ghosts_out_ids[i].erase(last, ghosts_out_ids[i].end());
+    }
+
+    if (FULL_DEBUG) {
+        cout << mpiInfo.comm_rank << " GHOSTS_OUT_IDS={ ";
+        for (int n = 0; n < mpiInfo.comm_size; n++) {
+            cout << "[ ";
+            for (int i = 0; i < ghosts_out_ids[n].size(); i++) {
+                cout << ghosts_out_ids[n][i] << " ";
+            }
+            cout << "] ";
+        }
+        cout << "}\n";
+    }
+
+    cout << mpiInfo.comm_rank << " BuildGhosts here3\n";
+
+    // считаем количество соседей, которым что-то нужно отправлять и обмениваемся размерами
+    vector<int> out_lens(mpiInfo.comm_size, 0);
+    for (int i = 0; i < mpiInfo.comm_size; i++) {
+        out_lens[i] = ghosts_out_ids[i].size();
+    }
+    for (int i = 0; i < mpiInfo.comm_size; i++) {
+        if (out_lens[i] > 0) {
+            active_neighs_num++;
+        }
+    }
+    cout << mpiInfo.comm_rank << " active_neighs_num=" << active_neighs_num << endl;
+    vector<int> in_lens(mpiInfo.comm_size, 0);
+    for (int i = 0; i < mpiInfo.comm_size; i++) {
+        MPI_Gather(&out_lens[i], 1, MPI_INT, &in_lens[0], 1, MPI_INT, i, mpiInfo.comm);
+    }
+
+    if (FULL_DEBUG) {
+        cout << mpiInfo.comm_rank << " IN_LENS=[ ";
+        for (int i = 0; i < mpiInfo.comm_size; i++) {
+            cout << in_lens[i] << " ";
+        }
+        cout << "]\n";
+    }
+    
+    cout << mpiInfo.comm_rank << " BuildGhosts here4\n";
+
+    // обмениваемся idшниками ячеек от соседей и формируем LinearTree ячеек
+    vector<vector<GlobalNumber_t>> ghosts_in_ids_tmp(mpiInfo.comm_size);
+    for (int i = 0; i < mpiInfo.comm_size; i++) {
+        ghosts_in_ids_tmp[i] = vector<GlobalNumber_t>(in_lens[i]);
+    }
+
+    cout << mpiInfo.comm_rank << " BuildGhosts here44\n";
+
+    MPI_Request send_reqs[active_neighs_num];
+    MPI_Status send_statuses[active_neighs_num];
+    int req_num = 0;
+
+    for (int n = 0; n < mpiInfo.comm_size; n++) {
+        if (out_lens[n] > 0) {
+            MPI_Isend(&ghosts_out_ids[n][0], out_lens[n], MPI_LONG_LONG_INT, n, 0, mpiInfo.comm, &send_reqs[req_num]);
+            req_num++;
+        }
+    }
+
+    cout << mpiInfo.comm_rank << " BuildGhosts here444\n";
+
+    for (int n = 0; n < mpiInfo.comm_size; n++) {
+        if ( (n != mpiInfo.comm_rank) && (in_lens[n] > 0) ) {
+            MPI_Status status;
+            MPI_Recv(&ghosts_in_ids_tmp[n][0], in_lens[n], MPI_LONG_LONG_INT, n, MPI_ANY_TAG, mpiInfo.comm, &status);
+
+            // fill temp in in_ghosts[n]
+            for (int i = 0; i < in_lens[n]; i++) {
+                ghosts_in[n].cells.push_back(Cell(0, ghosts_in_ids_tmp[n][i])); 
+                ghosts_in[n].cells[i].temp[0] = 0.0;
+            }
+        }
+    }
+
+    cout << mpiInfo.comm_rank << " BuildGhosts here4444\n";
+
+    MPI_Waitall(active_neighs_num, send_reqs, send_statuses);
+
+    if (FULL_DEBUG) {
+        cout << mpiInfo.comm_rank << " GHOSTS_IN_WITHOUT_LEVELS={ ";
+        for (int n = 0; n < mpiInfo.comm_size; n++) {
+            cout << "[ ";
+            for (int i = 0; i < ghosts_in[n].cells.size(); i++) {
+                cout << "(" << ghosts_in[n].cells[i].lvl << "," << ghosts_in[n].cells[i].i << "," << ghosts_in[n].cells[i].j << ") ";
+            }
+            cout << "] ";
+        }
+        cout << "}\n";
+    }
+
+    cout << mpiInfo.comm_rank << " BuildGhosts here5\n";
+
+    // заполняем уровни ячеек
+    vector<vector<int>> ghosts_out_lvls_tmp(mpiInfo.comm_size);
+    for (int n = 0; n < mpiInfo.comm_size; n++ ) {
+        for (int i = 0; i < out_lens[n]; i++) {
+            Cell c;
+            int c_idx = mesh.FindCell(ghosts_out_ids[n][i], &c);
+            if (c_idx == -1) {
+                cout << "ERROR no cell found\n";
+                // continue;
+            }
+            int c_lvl = mesh.cells[c_idx].lvl;
+            ghosts_out_lvls_tmp[n].push_back(c_lvl);
+        }
+    }
+
+    if (FULL_DEBUG) {
+        cout << mpiInfo.comm_rank << " GHOSTS_OUT_LEVELS={ ";
+        for (int n = 0; n < mpiInfo.comm_size; n++) {
+            cout << "[ ";
+            for (int i = 0; i < ghosts_out_lvls_tmp[n].size(); i++) {
+                cout << ghosts_out_lvls_tmp[n][i] << " ";
+            }
+            cout << "] ";
+        }
+        cout << "}\n";
+    }
+
+    req_num = 0;
+    for (int n = 0; n < mpiInfo.comm_size; n++) {
+        if (out_lens[n] > 0) {
+            MPI_Isend(&ghosts_out_lvls_tmp[n][0], out_lens[n], MPI_INT, n, 0, mpiInfo.comm, &send_reqs[req_num]);
+            req_num++;
+        }
+    }
+
+    for (int n = 0; n < mpiInfo.comm_size; n++) {
+        if ( (n != mpiInfo.comm_rank) && (in_lens[n] > 0) ) {
+            MPI_Status status;
+            vector<int>buf(in_lens[n]);
+            MPI_Recv(&buf[0], in_lens[n], MPI_INT, n, MPI_ANY_TAG, mpiInfo.comm, &status);
+
+            // fill lvlvs in in_ghosts[n]
+            for (int i = 0; i < ghosts_in[n].cells.size(); i++) {
+                ghosts_in[n].cells[i].lvl = buf[i];
+            }
+        }
+    }
+
+    MPI_Waitall(active_neighs_num, send_reqs, send_statuses);
+
+    cout << mpiInfo.comm_rank << " BuildGhosts here6\n";
+
+    // создаем буферы для входящих и исходящих температур
+    for (int i = 0; i < mpiInfo.comm_size; i++) {
+        ghosts_in_temps[i]  = vector<double>(in_lens[i], 0);
+        ghosts_out_temps[i] = vector<double>(out_lens[i], 0);
+    }
+
+    cout << mpiInfo.comm_rank << " BuildGhosts here7\n";
+
+    std::cout << mpiInfo.comm_rank << " ghosts buffers built\n";
+
+    // if (FULL_DEBUG) {
+        cout << mpiInfo.comm_rank << " GHOSTS={ ";
+        for (int n = 0; n < mpiInfo.comm_size; n++) {
+            cout << "[ ";
+            for (int i = 0; i < ghosts_in[n].cells.size(); i++) {
+                cout << "(" << ghosts_in[n].cells[i].lvl << "," << ghosts_in[n].cells[i].i << "," << ghosts_in[n].cells[i].j << ") ";
+            }
+            cout << "] ";
+        }
+        cout << "}\n";
+    // }
+
+
     stat.timers["build_ghosts"].Stop();
     return 0;
 }
 
 int Proc::find_owner(GlobalNumber_t cell_id) {
     for (int i = 0; i < mpiInfo.comm_size; i++) {
-        if (meta.GetMetaOfProc(i).procStart > cell_id) {
-            return (i-1);
+        MetaInfo proc_meta = meta.GetMetaOfProc(i);
+        if ((proc_meta.procStart <= cell_id) && (proc_meta.procEnd >= cell_id)) {
+            return i;
         }
     }
-    if (meta.GetMetaOfProc(mpiInfo.comm_size).procStart <= cell_id) {
-        return mpiInfo.comm_size;
-    }
+    
     // std::cout << "owner not found for cell_id=" << cell_id << std::endl;
     return -1;
 }
 
+int Proc::ExchangeGhosts() {
+    
 
+    stat.timers["exchange_ghosts"].Start();
+
+    int temp_l_corr = time_step_n % 2; // чтобы брать значение temp[0] или temp[1]
+    int cur_temp_idx = temp_l_corr;
+
+    // non-blocking send to all neighs
+    MPI_Request send_reqs[active_neighs_num];
+    MPI_Status send_statuses[active_neighs_num];
+    int req_num = 0;
+
+    for (int n = 0; n < mpiInfo.comm_size; n++) {
+        if ( (n != mpiInfo.comm_rank) && (ghosts_out_ids[n].size() > 0) ) {
+            // fill out temps for n
+            for (int i = 0; i < ghosts_out_ids[n].size(); i++) {
+                Cell *c;
+                int idx = mesh.FindCell(ghosts_out_ids[n][i], c);
+                if (idx == -1) {
+                    cout << "[ERROR] exchange ghosts cell not found but have to\n";
+                }
+                ghosts_out_temps[n][i] = mesh.cells[idx].temp[cur_temp_idx];
+            }
+            
+            MPI_Isend(&ghosts_out_temps[n][0], ghosts_out_ids[n].size(), MPI_DOUBLE, n, 0, mpiInfo.comm, &send_reqs[req_num]);
+            req_num++;
+        }
+    }
+
+    // blocking recv from all neighs
+
+    for (int n = 0; n < mpiInfo.comm_size; n++) {
+        if ( (n != mpiInfo.comm_rank) && (ghosts_in[n].cells.size() > 0) ) {
+            MPI_Status status;
+            MPI_Recv(&ghosts_in_temps[n][0], ghosts_in[n].cells.size(), MPI_DOUBLE, n, MPI_ANY_TAG, mpiInfo.comm, &status);
+
+            // fill temp in in_ghosts[n]
+            for (int i = 0; i < ghosts_in[n].cells.size(); i++) {
+                ghosts_in[n].cells[i].temp[cur_temp_idx] = ghosts_in_temps[n][i];
+            }
+        }
+    }
+
+    
+    MPI_Waitall(active_neighs_num, send_reqs, send_statuses);
+
+    stat.timers["exchange_ghosts"].Stop();
+    return 0;
+}
 
 void Proc::FillStart(double (*start_func)(double, double)) {
     double x, y;
@@ -263,6 +509,8 @@ void Proc::FillStart(double (*start_func)(double, double)) {
 
     std::cout << mpiInfo.comm_rank << " filled start at temp[0]\n";
 }
+
+
 void Proc::MakeStep() {
     stat.timers["step"].Start();
     int temp_l_corr = time_step_n % 2; // чтобы брать значение temp[0] или temp[1]
@@ -270,7 +518,7 @@ void Proc::MakeStep() {
     int next_temp_idx = (temp_l_corr + 1) % 2;
     time_step_n++;
 
-    // todo exchange ghosts
+    ExchangeGhosts();
 
     for (int i = 0; i < mesh.cells.size(); i++) {
         char border_cond_type;
@@ -366,37 +614,6 @@ void Proc::WriteT(string filename) {
 
     stat.timers["io"].Stop();
 }
-
-// vector<char> Proc::get_write_cells_struct() {
-//     vector<char> buf;
-//     std::cout << mpiInfo.comm_rank << " gen structs for write start\n";
-//     for (auto c: mesh.cells) {
-//         // int local_sz = sizeof(int) + sizeof(int) + sizeof(int) + sizeof(double); // lvl, i, j, temp[0]
-//         // buf.resize(buf.size() + local_sz);
-//         char *tmp = (char *)(&c.lvl);
-//         for (int i = 0; i < sizeof(int); i++) {
-//             buf.push_back(tmp[i]);
-//         }
-//         tmp = (char *)(&c.i);
-//         for (int i = 0; i < sizeof(int); i++) {
-//             buf.push_back(tmp[i]);
-//         }
-//         tmp = (char *)(&c.j);
-//         for (int i = 0; i < sizeof(int); i++) {
-//             buf.push_back(tmp[i]);
-//         }
-//         if (c.temp[0] > 1) {
-//             std::cout << (c.temp[0] > 5) << std::endl;
-//         }
-        
-//         tmp = (char *)(&c.temp[0]);
-//         for (int i = 0; i < sizeof(double); i++) {
-//             buf.push_back(tmp[i]);
-//         }
-//     }
-//     std::cout << mpiInfo.comm_rank << " gen structs for write finished\n";
-//     return buf;
-// }
 
 void Proc::WriteStat(string filename) {
     std::cout << "MpiInfo: " << mpiInfo.toString() << std::endl;

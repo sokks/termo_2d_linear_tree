@@ -48,6 +48,7 @@ GlobalNumber_t merge_ints(int a, int b) {
         
         int b1 = b & (1 << pos);
         GlobalNumber_t b2 = b1 << pos;
+        c = c | b2;
     }
 
     return c;
@@ -77,6 +78,7 @@ CellIndex::CellIndex(int _lvl, GlobalNumber_t globalNumber): lvl(_lvl) {
 }
 
 GlobalNumber_t CellIndex::get_global_number() {
+    // cout << "global_number(" << lvl << "," << i << "," << j << ")=" << merge_ints(i, j) << endl;
     return merge_ints(i, j);
 }
 
@@ -129,7 +131,7 @@ Child CellIndex::get_child_pos() {
 }
 
 CellIndex CellIndex::get_face_neighbor(Neigh n) {
-    int h = 1 << (max_lvl - lvl - 1); // 2^(b-l)
+    int h = 1 << (max_lvl - lvl); // 2^(b-l)
     CellIndex c;
     c.lvl = lvl;
     c.i   = i + ((n == Neigh::DOWN) ? -h : (n == Neigh::UP) ? h : 0);
@@ -339,20 +341,36 @@ vector<CellIndex> CellIndex::get_all_halfsize_possible_neighs() {
     vector<CellIndex> res;
     res.reserve( 8 );
 
-    res = get_halfsize_possible_face_neighbours_optimized(res, Neigh::LEFT);
-    res = get_halfsize_possible_face_neighbours_optimized(res, Neigh::RIGHT);
-    res = get_halfsize_possible_face_neighbours_optimized(res, Neigh::UP);
-    res = get_halfsize_possible_face_neighbours_optimized(res, Neigh::DOWN);
+    if (!is_left_border()) {
+        res = get_halfsize_possible_face_neighbours_optimized(res, Neigh::LEFT);
+    }
+    if (!is_right_border()) {
+        res = get_halfsize_possible_face_neighbours_optimized(res, Neigh::RIGHT);
+    }
+    if (!is_upper_border()) {
+        res = get_halfsize_possible_face_neighbours_optimized(res, Neigh::UP);
+    }
+    if (!is_down_border()) {
+        res = get_halfsize_possible_face_neighbours_optimized(res, Neigh::DOWN);
+    }
 
     return res;
 }
 
 vector<CellIndex>& CellIndex::get_all_halfsize_possible_neighs_optimized(vector<CellIndex>& buf) {
 
-    buf = get_halfsize_possible_face_neighbours_optimized(buf, Neigh::LEFT);
-    buf = get_halfsize_possible_face_neighbours_optimized(buf, Neigh::RIGHT);
-    buf = get_halfsize_possible_face_neighbours_optimized(buf, Neigh::UP);
-    buf = get_halfsize_possible_face_neighbours_optimized(buf, Neigh::DOWN);
+    if (!is_left_border()) {
+        buf = get_halfsize_possible_face_neighbours_optimized(buf, Neigh::LEFT);
+    }
+    if (!is_right_border()) {
+        buf = get_halfsize_possible_face_neighbours_optimized(buf, Neigh::RIGHT);
+    }
+    if (!is_upper_border()) {
+        buf = get_halfsize_possible_face_neighbours_optimized(buf, Neigh::UP);
+    }
+    if (!is_down_border()) {
+        buf = get_halfsize_possible_face_neighbours_optimized(buf, Neigh::DOWN);
+    }
 
     return buf;
 }
@@ -361,20 +379,36 @@ vector<CellIndex> CellIndex::get_all_samesize_possible_neighs() {
     vector<CellIndex> res;
     res.reserve( 4 );
 
-    res.push_back(get_face_neighbor(Neigh::LEFT));
-    res.push_back(get_face_neighbor(Neigh::RIGHT));
-    res.push_back(get_face_neighbor(Neigh::DOWN));
-    res.push_back(get_face_neighbor(Neigh::UP));
+    if (!is_left_border()) {
+        res.push_back(get_face_neighbor(Neigh::LEFT));
+    }
+    if (!is_right_border()) {
+        res.push_back(get_face_neighbor(Neigh::RIGHT));
+    }
+    if (!is_down_border()) {
+        res.push_back(get_face_neighbor(Neigh::DOWN));
+    }
+    if (!is_upper_border()) {
+        res.push_back(get_face_neighbor(Neigh::UP));
+    }
 
     return res;
 }
 
 vector<CellIndex>& CellIndex::get_all_samesize_possible_neighs_optimized(vector<CellIndex>& buf) {
 
-    buf.push_back(get_face_neighbor(Neigh::LEFT));
-    buf.push_back(get_face_neighbor(Neigh::RIGHT));
-    buf.push_back(get_face_neighbor(Neigh::DOWN));
-    buf.push_back(get_face_neighbor(Neigh::UP));
+    if (!is_left_border()) {
+        buf.push_back(get_face_neighbor(Neigh::LEFT));
+    }
+    if (!is_right_border()) {
+        buf.push_back(get_face_neighbor(Neigh::RIGHT));
+    }
+    if (!is_down_border()) {
+        buf.push_back(get_face_neighbor(Neigh::DOWN));
+    }
+    if (!is_upper_border()) {
+        buf.push_back(get_face_neighbor(Neigh::UP));
+    }
 
     return buf;
 }
@@ -383,20 +417,36 @@ vector<CellIndex> CellIndex::get_all_larger_possible_neighs() {
     vector<CellIndex> res;
     res.reserve(4);
 
-    res = get_larger_possible_face_neighbour_optimized(res, Neigh::LEFT);
-    res = get_larger_possible_face_neighbour_optimized(res, Neigh::RIGHT);
-    res = get_larger_possible_face_neighbour_optimized(res, Neigh::UP);
-    res = get_larger_possible_face_neighbour_optimized(res, Neigh::DOWN);
+    if (!is_left_border()) {
+        res = get_larger_possible_face_neighbour_optimized(res, Neigh::LEFT);
+    }
+    if (!is_right_border()) {
+        res = get_larger_possible_face_neighbour_optimized(res, Neigh::RIGHT);
+    }
+    if (!is_upper_border()) {
+        res = get_larger_possible_face_neighbour_optimized(res, Neigh::UP);
+    }
+    if (!is_down_border()) {
+        res = get_larger_possible_face_neighbour_optimized(res, Neigh::DOWN);
+    }
 
     return res;
 }
 
 vector<CellIndex>& CellIndex::get_all_larger_possible_neighs_optimized(vector<CellIndex>& buf) {
 
-    buf = get_larger_possible_face_neighbour_optimized(buf, Neigh::LEFT);
-    buf = get_larger_possible_face_neighbour_optimized(buf, Neigh::RIGHT);
-    buf = get_larger_possible_face_neighbour_optimized(buf, Neigh::UP);
-    buf = get_larger_possible_face_neighbour_optimized(buf, Neigh::DOWN);
+    if (!is_left_border()) {
+        buf = get_larger_possible_face_neighbour_optimized(buf, Neigh::LEFT);
+    }
+    if (!is_right_border()) {
+        buf = get_larger_possible_face_neighbour_optimized(buf, Neigh::RIGHT);
+    }
+    if (!is_upper_border()) {
+        buf = get_larger_possible_face_neighbour_optimized(buf, Neigh::UP);
+    }
+    if (!is_down_border()) {
+        buf = get_larger_possible_face_neighbour_optimized(buf, Neigh::DOWN);
+    }
 
     return buf;
 }
@@ -406,29 +456,29 @@ vector<GlobalNumber_t> CellIndex::get_all_possible_neighbours_ids() {
     vector<CellIndex> all_neighs;
     all_neighs.reserve(20);
 
-    all_neighs = get_all_halfsize_possible_neighs_optimized(all_neighs);
+    if (lvl < max_lvl) {
+        all_neighs = get_all_halfsize_possible_neighs_optimized(all_neighs);
+    }
     all_neighs = get_all_samesize_possible_neighs_optimized(all_neighs);
-    all_neighs = get_all_larger_possible_neighs_optimized(all_neighs);
-    
+    if (lvl > 1) {
+        all_neighs = get_all_larger_possible_neighs_optimized(all_neighs);
+    }
+
     vector<GlobalNumber_t> all_neighs_ids;
     all_neighs_ids.reserve(all_neighs.size());
+
+    // cout << "get_all_possible_neighbours_ids(" << lvl << "," << i << "," << j << ")= { ";
     for (CellIndex c: all_neighs) {
+        // cout << "(" << c.lvl << "," << c.i << "," << c.j << "), ";
         all_neighs_ids.push_back(c.get_global_number());
     }
+    // cout << " }" << endl;
 
     sort(all_neighs_ids.begin(), all_neighs_ids.end());
+    auto last = std::unique(all_neighs_ids.begin(), all_neighs_ids.end());
+    all_neighs_ids.erase(last, all_neighs_ids.end());
 
-    vector<GlobalNumber_t> all_neighs_ids_without_duplicates;
-    all_neighs_ids_without_duplicates.reserve(all_neighs_ids.size());
-    GlobalNumber_t prev = all_neighs_ids[0];
-    all_neighs_ids_without_duplicates.push_back(prev);
-    for (auto it = ++all_neighs_ids.begin(); it < all_neighs_ids.end(); it++) {
-        if (*it != prev) {
-            all_neighs_ids_without_duplicates.push_back(*it);
-        }
-        prev = *it;
-    }
-    return all_neighs_ids_without_duplicates;
+    return all_neighs_ids;
 }
 
 bool CellIndex::is_left_border() {
@@ -562,6 +612,8 @@ LinearTree::LinearTree(double (*Temp_func)(double, double)) {
 }
 
 int LinearTree::FindCell(GlobalNumber_t target, Cell *cell) {
+    // cout << "FindCell(" << target << ")\n";
+
     // binary search
     int left = 0;
 	int right = cells.size();
@@ -713,11 +765,18 @@ void LinearTree::WriteOffsets(string filename, int n_of_procs) {
     int sum = 0;
     for (int i = 0; i < n_of_procs-1; i++) {
         offsets.push_back(sum * one_sz);
-        sum += cells.size() / n_of_procs;
-        offsets.push_back(sum * one_sz);
+        int len = cells.size() / n_of_procs;
+        offsets.push_back(len * one_sz);
+        sum += len;
     }
     offsets.push_back(sum * one_sz);
     offsets.push_back((cells.size() - sum) * one_sz);
+
+    cout << "OFFSETS={ ";
+    for (int i = 0; i < offsets.size(); i++) {
+        cout << offsets[i] << " ";
+    }
+    cout << "}" << endl;
 
     std::ofstream fout(filename, std::ios::out | std::ios::binary);
     fout.write((char *)&offsets[0], offsets.size() * sizeof(int));
