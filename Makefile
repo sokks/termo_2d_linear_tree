@@ -1,12 +1,12 @@
 COMPILER=mpicxx
 OPTS=-O0
 
-BASE_LVL=2
-MAX_LVL=3
+BASE_LVL=6
+MAX_LVL=9
 
 N_PROCS=2
 
-TIME_STEPS=200
+TIME_STEPS=300
 
 all: bin
 
@@ -36,7 +36,8 @@ vis_decomposition: update_txt
 	python3 vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/grid_decomposition_$(BASE_LVL)_$(N_PROCS).png tab10 procs $(N_PROCS)
 
 vis_temp: update_txt
-	python3 vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/start_temp.png coolwarm temp
+	# python3 vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/start_temp.png coolwarm temp
+	python3 vis_2d_nonuniform.py $(MAX_LVL) data/temp/000200.out.txt data/pics/000200.png coolwarm temp
 
 update_txt: data/refine/base_grid.dat bin/translate
 	bin/translate data/refine/base_grid.dat data/refine/base_grid.txt

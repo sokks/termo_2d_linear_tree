@@ -140,3 +140,4 @@ struct LinearTree {
 double get_grad(double w00, double w01, double w02,
                 double w10, double w11, double w12,
                 double w20, double w21, double w22, double dx);
+double get_lvl_dx(int lvl);

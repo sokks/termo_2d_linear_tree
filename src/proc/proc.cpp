@@ -14,19 +14,12 @@ double base_tau = 0.001;
 double      tau = 0.001;
 int    time_steps = 100;
 
-void Init(int gs_x, int ts_n) {
-    base_sz = gs_x;
-    base_lvl = (int) floor(log2(base_sz));
-
-    base_dx = (Area::x_end - Area::x_start) / base_sz;
+void SolverInit(int ts_n) {
     base_tau = (base_dx * base_dx) / 4;
+    tau = (min_dx * min_dx) / 4;
     time_steps = ts_n;
 
-    // todo set tau
-
-    std::cout << "a=" << Area::a << std::endl;
-    std::cout << "base_sz=" << base_sz << " base_lvl=" << base_lvl << " max_lvl=" << max_lvl << std::endl;
-    std::cout << "base_dx=" << base_dx << " base_tau=" << base_tau << " t_end=" << base_tau * time_steps << std::endl;
+    std::cout << "tau=" << tau << " t_end=" << tau * time_steps << std::endl;
 }
 
 
@@ -135,11 +128,6 @@ int Proc::InitMesh() {
     for (int i = my_i_start; i < my_i_stop; i += global_i_step) {
         mesh.cells.push_back(Cell(base_lvl, i));
     }
-
-    // fill metaInfo (пока вообще обмен не нужен, но если загружать сетку извне, то будет нужно)
-    
-
-    // todo set tau using min dx
 
     stat.timers["init_mesh"].Stop();
     std::cout << "Mesh inited\n";
@@ -537,74 +525,127 @@ void Proc::MakeStep() {
 
     ExchangeGhosts();
 
-    PrintMyCells();
-    PrintGhostCells();
+    // PrintMyCells();
+    // PrintGhostCells();
 
     time_step_n++;
 
     for (int i = 0; i < mesh.cells.size(); i++) {
-        char border_cond_type;
-        double (*cond_func)(double, double, double);
+        
         Cell cell = mesh.cells[i];
-        stat.timers["get_border_cond"].Start();
-        cell.get_border_cond(&border_cond_type, &cond_func);
-        stat.timers["get_border_cond"].Stop();
+        
         double x, y;
         cell.get_spacial_coords(&x, &y);
 
+        // ищем всех возможных соседей
+        stat.timers["get_possible_neighs"].Start();
+        vector<GlobalNumber_t> possible_neigh_ids = cell.get_all_possible_neighbours_ids();
+        stat.timers["get_possible_neighs"].Stop();
+
+
+        // вычисляем потоки междуу ячейкой и реально существующими соседями
+        vector<double> termo_flows;
+        for (GlobalNumber_t id: possible_neigh_ids) {
+            int owner = find_owner(id);
+            if (owner == -1) {
+                continue;
+            }
+            Cell neigh_cell;
+
+            if (owner == mpiInfo.comm_rank) { // ячейка у меня
+                stat.timers["find_cell"].Start();
+                int idx = mesh.FindCell(id, &neigh_cell);
+                stat.timers["find_cell"].Stop();
+                if (idx == -1) {
+                    continue;
+                }
+            } else { // ячейка-призрак
+                stat.timers["find_cell"].Start();
+                int idx = ghosts_in[owner].FindCell(id, &neigh_cell);
+                stat.timers["find_cell"].Stop();
+                if (idx == -1) {
+                    continue;
+                }
+            }
+
+            double neigh_x, neigh_y;
+            neigh_cell.get_spacial_coords(&neigh_x, &neigh_y);
+            double d = dist(x, y, neigh_x, neigh_y);
+            cout << "dist( (" << x << "," << y << ")  (" << neigh_x << "," << neigh_y << ") )=" << d << endl;
+            double flow = - Area::a * (neigh_cell.temp[cur_temp_idx] - cell.temp[cur_temp_idx]) / d;
+            double s = get_lvl_dx(cell.lvl);
+            s = (cell.lvl <= neigh_cell.lvl) ? s : (s/2);
+
+            // проекции на оси
+            double full_flow = s * flow * fabs(x - neigh_x) / d + s * flow * fabs(y - neigh_y) / d;
+
+            termo_flows.push_back(full_flow);
+        }
+
+        double flows_sum = 0.0;
+        for (double f: termo_flows) {
+            flows_sum += f;
+        }
+
+        // вычисляем новое значение в ячейке
+       
+        char border_cond_type;
+        double (*cond_func)(double, double, double);
+        stat.timers["get_border_cond"].Start();
+        cell.get_border_cond(&border_cond_type, &cond_func);
+        stat.timers["get_border_cond"].Stop();
+
         double new_T = 0;
+        
+        if (border_cond_type == -1) {  // внутренняя ячейка
 
-        if (border_cond_type == -1) {  // внутренняя ячейка, но мб не у нас
-            
-            vector<double> termo_flows;
+            cout << mpiInfo.comm_rank << "cur_t=" << cell.temp[cur_temp_idx] << " flows_sum=" << flows_sum << " S=" << cell.get_S() << " Q(x,y,t)=" << Area::Q(x, y, tau * time_step_n) << endl;
+            new_T = cell.temp[cur_temp_idx] - tau * (flows_sum  
+                    - Area::Q(x, y, tau * time_step_n)) /  cell.get_S();
 
-            stat.timers["get_possible_neighs"].Start();
-            vector<GlobalNumber_t> possible_neigh_ids = cell.get_all_possible_neighbours_ids();
-            stat.timers["get_possible_neighs"].Stop();
-            for (GlobalNumber_t id: possible_neigh_ids) {
-                int owner = find_owner(id);
-                if (owner == -1) {
-                    continue;
-                }
-                Cell neigh_cell;
+        } else if (border_cond_type == 1) {  // граничные условия первого рода
 
-                if (owner == mpiInfo.comm_rank) { // ячейка у меня
-                    
-                    stat.timers["find_cell"].Start();
-                    int status = mesh.FindCell(id, &neigh_cell);
-                    stat.timers["find_cell"].Stop();
-                    if (status == -1) {
-                        continue;
-                    }
-                } else { // ячейка-призрак
-                    // int status = ghosts_in[owner].FindCell(id, &neigh_cell);
-                    // if (status == -1) {
-                    //     continue;
-                    // }
-                    continue;
-                }
-
-                double neigh_x, neigh_y;
-                neigh_cell.get_spacial_coords(&neigh_x, &neigh_y);
-                double flow = (neigh_cell.temp[cur_temp_idx] - cell.temp[cur_temp_idx]) / dist(x, y, neigh_x, neigh_y);
-                if (cell.lvl != neigh_cell.lvl) {
-                    flow *= 0.3 * sqrt(10); // по формуле расстояния между центрами
-                }
-                termo_flows.push_back(flow);
+            // это по сути тоже поток, только короче (половина размера ячейки) по напралению к границе
+            double border_x = x, border_y = y; // +- lvl_dx/2
+            double lvl_dx = get_lvl_dx(cell.lvl);
+            if (cell.is_right_border()) {
+                border_x += lvl_dx/2;
             }
-
-            double flows_sum = 0.0;
-            for (double f: termo_flows) {
-                flows_sum += f;
+            if (cell.is_left_border()) {
+                border_x -= lvl_dx/2;
             }
+            if (cell.is_down_border()) {
+                border_y -= lvl_dx/2;
+            }
+            if (cell.is_upper_border()) {
+                border_y += lvl_dx/2;
+            }
+            double border_flow = - Area::a * (cell.temp[cur_temp_idx] 
+                    - cond_func(border_x, border_y, time_step_n * tau)) / (lvl_dx/2) * lvl_dx;
+            new_T = cell.temp[cur_temp_idx] - tau * ((flows_sum + border_flow) 
+                    + Area::Q(x, y, tau * time_step_n)) /  cell.get_S();
 
-            new_T = cell.temp[cur_temp_idx] + flows_sum / cell.get_S() + Area::Q(x, y, tau * time_step_n);
-            new_T = tau * time_step_n;
+        } else if (border_cond_type == 2) { // граничное условие второго рода
 
-        } else if (border_cond_type == 1) {
-            new_T = cond_func(x, y, time_step_n * tau); // ? в центрах ячеек по-другому считается?
-            new_T = - tau * time_step_n;
-        } else if (border_cond_type == 2) {
+            // TODO это просто добавить поток, заданный условием
+            double border_x = x, border_y = y; // +- lvl_dx/2
+            double lvl_dx = get_lvl_dx(cell.lvl);
+            if (cell.is_right_border()) {
+                border_x += lvl_dx/2;
+            }
+            if (cell.is_left_border()) {
+                border_x -= lvl_dx/2;
+            }
+            if (cell.is_down_border()) {
+                border_y -= lvl_dx/2;
+            }
+            if (cell.is_upper_border()) {
+                border_y += lvl_dx/2;
+            }
+            double border_flow = cond_func(border_x, border_y, time_step_n * tau);
+            new_T = cell.temp[cur_temp_idx] - tau * ((flows_sum + border_flow) 
+                    + Area::Q(x, y, tau * time_step_n)) /  cell.get_S();
+
             std::cout << "border cond type = 2 not implemented\n";
             // not imptemented
         }

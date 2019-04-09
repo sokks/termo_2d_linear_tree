@@ -6,7 +6,7 @@ using std::endl;
 
 
 bool WRITE_LAYERS = true;
-int write_freq = 1000;
+int write_freq = 100;
 string baseFolderTemp = "data/temp/";
 
 string gen_filename(string baseFolder, int n) {
@@ -30,7 +30,8 @@ int main(int argc, char **argv) {
     string grid_file  = argv[4];
     int    ts_n       = std::atoi(argv[5]);
 
-    GridInit(base_level, max_level);    
+    GridInit(base_level, max_level);
+    SolverInit(ts_n);   
 
     Proc p;
     p.MPIInit(argc, argv);

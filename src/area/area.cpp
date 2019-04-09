@@ -102,12 +102,22 @@ double Area::Q(double x, double y, double t) {
     if (t > 0.2) {
         return 0;
     }
-    double eps = 0.01;
-    if ((fabs(x - 0.45) < eps) && (fabs(y - 0.5) < eps)) {
+    double eps = 0.1;
+
+    double r = 0.05;
+    double c_x = 0.25;
+    double c_y = 0.25;
+
+    // if ((fabs(x - 0.45) < eps) && (fabs(y - 0.5) < eps)) {
+    //     return 0.01;
+    // }
+    // if ((fabs(x - 0.55) < eps) && (fabs(y - 0.5) < eps)) {
+    //     return 0.01;
+    // }
+
+    if ((fabs(x - c_x) < eps ) && (fabs(y - c_y) < eps)) {
         return 0.01;
     }
-    if ((fabs(x - 0.55) < eps) && (fabs(y - 0.5) < eps)) {
-        return 0.01;
-    }
+
     return 0;
 }

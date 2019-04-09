@@ -18,7 +18,7 @@ extern double base_tau;
 extern double tau;
 extern int    time_steps;
 
-void Init(int gs_x, int ts_n);
+void SolverInit(int ts_n);
 
 
 /* * * * * * * * * * * СТАТИСТИКА * * * * * * * * * * */

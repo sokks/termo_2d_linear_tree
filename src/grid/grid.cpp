@@ -847,3 +847,7 @@ void LinearTree::GenFromWriteStruct(vector<char>& buf) {
     cout << "first cell = Cell(" << cells[0].lvl << ", " << cells[0].i << "," << cells[0].j << ", " << cells[0].temp[0] << ")";
     cout << "last cell = Cell(" << cells[cells.size()-1].lvl << ", " << cells[cells.size()-1].i << "," << cells[cells.size()-1].j << ", " << cells[cells.size()-1].temp[0] << ")";
 }
+
+double get_lvl_dx(int lvl) {
+    return  min_dx * pow(2, max_lvl - lvl);
+}
