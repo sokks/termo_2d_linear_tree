@@ -35,9 +35,11 @@ vis_base_grid: update_txt
 vis_decomposition: update_txt
 	python3 vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/grid_decomposition_$(BASE_LVL)_$(N_PROCS).png tab10 procs $(N_PROCS)
 
-vis_temp: update_txt
+vis_temps: translate
 	# python3 vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/start_temp.png coolwarm temp
-	python3 vis_2d_nonuniform.py $(MAX_LVL) data/temp/000200.out.txt data/pics/000200.png coolwarm temp
+	# python3 vis_2d_nonuniform.py $(MAX_LVL) data/temp/000200.out.txt data/pics/000200.png coolwarm temp
+	mkdir -p data/temp/img
+	./plot_temps.sh $(MAX_LVL)
 
 update_txt: data/refine/base_grid.dat bin/translate
 	bin/translate data/refine/base_grid.dat data/refine/base_grid.txt

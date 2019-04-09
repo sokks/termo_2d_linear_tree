@@ -7,7 +7,7 @@ double Area::x_end = 1.0;
 double Area::y_end = 1.0;
 
 // double ro = 1190.0, lambda = 0.16, c = 900.0;
-double Area::ro = 1, Area::lambda = 0.01, Area::c = 1;
+double Area::ro = 1, Area::lambda = 0.1, Area::c = 1;
 double Area::a = lambda / (ro * c);
 // double a = 1;
 

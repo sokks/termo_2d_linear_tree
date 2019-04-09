@@ -35,6 +35,9 @@ tcks = []
 cbar_label = ''
 
 zi = griddata((Y, X), Z, (xi[None,:], yi[:,None]), method='linear')
+if plot_dat == 'temp':
+    cbar_label = 'temperature'
+
 if plot_dat == 'lvls':
     zi = griddata((Y, X), L, (xi[None,:], yi[:,None]), method='nearest')
     viridis = cm.get_cmap(cmap_name, 12)
@@ -64,7 +67,11 @@ elif plot_dat == 'procs':
     
 
 pl = plt.pcolor(xi, yi, zi, cmap=cmp)
-cbar = plt.colorbar(pl, ticks=tcks)
+cbar = None
+if tcks:
+    cbar = plt.colorbar(pl, ticks=tcks)
+else:
+    cbar = plt.colorbar(pl)
 if cbar_label != '':
     cbar.ax.get_yaxis().labelpad = 20
     cbar.ax.set_ylabel(cbar_label, rotation=270)
