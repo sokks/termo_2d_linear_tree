@@ -1,12 +1,13 @@
+# COMPILER=mpixlC
 COMPILER=mpicxx
 OPTS=-O0
 
 BASE_LVL=6
 MAX_LVL=9
 
-N_PROCS=2
+N_PROCS=4
 
-TIME_STEPS=300
+TIME_STEPS=3000
 
 all: bin
 
@@ -25,6 +26,7 @@ test: bin/test
 
 gen_grid: bin/gen_grid
 	rm -rf data/refine/*
+	mkdir -p data/refine
 	bin/gen_grid $(BASE_LVL) $(MAX_LVL) data/refine/base_grid.dat $(N_PROCS) data/refine/offsets_$(N_PROCS).dat
 
 
@@ -48,7 +50,13 @@ update_txt: data/refine/base_grid.dat bin/translate
 
 run_mpi: bin/test
 	rm -rf data/temp/*
+	mkdir -p data/temp
 	mpiexec -np $(N_PROCS) bin/test $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS)
+
+job_mpi_polus: bin/test
+	rm -rf data/temp/*
+	mkdir -p data/temp
+	mpisubmit.pl -p $(N_PROCS) bin/test -- $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS)
 
 bin/test: build/main.o build/area.o build/grid.o build/proc.o Makefile
 	mkdir -p bin

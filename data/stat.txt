@@ -21,3 +21,42 @@ io: 3.84232
 sort_neighs: 0.780344
 step: 2.9064
 total: 6.99938
+
+----------------
+
+0 build_ghosts: 0.0394778
+exchange_ghosts: 97.371
+find_cell: 157.984
+get_border_cond: 5.14368
+get_possible_neighs: 49.9093
+init_mesh: 0.0714062
+io: 7.98251
+sort_neighs: 0
+step: 375.343
+total: -inf
+
+1 build_ghosts: 0.039482
+exchange_ghosts: 100.224
+find_cell: 152.631
+get_border_cond: 5.29544
+get_possible_neighs: 48.9173
+init_mesh: 0.0713712
+io: 7.45399
+sort_neighs: 0
+step: 375.882
+total: -inf
+
+2 build_ghosts: 0.0393654
+exchange_ghosts: 53.1025
+find_cell: 180.33
+get_border_cond: 5.40681
+get_possible_neighs: 56.3547
+init_mesh: 0.075157
+io: 7.05705
+sort_neighs: 0
+step: 376.325
+total: -inf
+
+3й тоже есть
+
+----------------

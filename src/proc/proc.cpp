@@ -597,7 +597,7 @@ void Proc::MakeStep() {
 
         double new_T = 0;
         
-        if (border_cond_type == -1) {  // внутренняя ячейка
+        if (border_cond_type == char(-1)) {  // внутренняя ячейка
 
             if (FULL_DEBUG) {
                 cout << mpiInfo.comm_rank << "cur_t=" << cell.temp[cur_temp_idx] << " flows_sum=" << flows_sum << " S=" << cell.get_S() << " Q(x,y,t)=" << Area::Q(x, y, tau * time_step_n) << endl;
