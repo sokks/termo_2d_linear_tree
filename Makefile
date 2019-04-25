@@ -5,7 +5,7 @@ OPTS=-O0
 BASE_LVL=9
 MAX_LVL=12
 
-N_PROCS=4
+N_PROCS=8
 
 TIME_STEPS=3000
 
@@ -46,8 +46,8 @@ vis_temps: translate
 vis_start_temp: update_txt
 	python3 vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/start_temp.png coolwarm temp
 
-update_txt: data/refine/base_grid.dat bin/translate
-	bin/translate data/refine/base_grid.dat data/refine/base_grid.txt
+update_txt: bin/translate
+	bin/translate data/refine/base_grid_tmp.dat data/refine/base_grid.txt
 
 
 

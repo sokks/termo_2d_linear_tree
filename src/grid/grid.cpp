@@ -602,6 +602,8 @@ LinearTree::LinearTree(double (*Temp_func)(double, double)) {
     int global_i_stop  = 1 << (max_lvl*2);
     int global_i_step  = 1 << (2*max_lvl - 2*base_lvl);
 
+    cells.reserve(800000);
+    
     for (int i = global_i_start; i < global_i_stop; i += global_i_step) {
         Cell c = Cell(base_lvl, i);
         double x, y;
@@ -672,7 +674,7 @@ int LinearTree::MarkToRefine() {
         if ((max_present_lvl == base_lvl) && (Area::Refine1(x, y))) {
             cells[i].mark_to_refine();
             cells[i].temp[0] = 100;
-            cout << int(cells[i].refine_mark)  << " ";
+            // cout << int(cells[i].refine_mark)  << " ";
             n_of_marks++;
         }
 
