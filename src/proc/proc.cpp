@@ -56,7 +56,6 @@ string MetaInfo::toString() {
 
 Proc::Proc() {
     stat.timers["total"] = MpiTimer();
-    stat.timers["total"].Start();
     stat.timers["io"] = MpiTimer();
     stat.timers["build_ghosts"] = MpiTimer();
     stat.timers["exchange_ghosts"] = MpiTimer();
@@ -85,7 +84,6 @@ Proc::~Proc() {
         delete[] ghosts_out_temps;
     }
 
-    stat.timers["total"].Stop();
     std::cout << mpiInfo.comm_rank << " ";
     std::cout << stat.toString() << std::endl;
 }
@@ -96,9 +94,11 @@ int Proc::MPIInit(int argc, char **argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiInfo.comm_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiInfo.comm_size);
 
+    stat.timers["total"].Start();
     return 0;
 }
 int Proc::MPIFinalize() {
+    stat.timers["total"].Stop();
     MPI_Finalize();
     return 0;
 }

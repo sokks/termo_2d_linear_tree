@@ -73,7 +73,7 @@ void split_ints(GlobalNumber_t c, int *a, int *b) {
 }
 
 CellIndex::CellIndex(int _lvl, GlobalNumber_t globalNumber): lvl(_lvl) {
-    std::cout << "new CellIndex(" << lvl << ", " << globalNumber << ")\n";
+    // std::cout << "new CellIndex(" << lvl << ", " << globalNumber << ")\n";
     split_ints(globalNumber, &i, &j);
 }
 

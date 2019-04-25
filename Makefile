@@ -2,8 +2,8 @@
 COMPILER=mpicxx
 OPTS=-O0
 
-BASE_LVL=6
-MAX_LVL=9
+BASE_LVL=9
+MAX_LVL=12
 
 N_PROCS=4
 
@@ -42,6 +42,9 @@ vis_temps: translate
 	# python3 vis_2d_nonuniform.py $(MAX_LVL) data/temp/000200.out.txt data/pics/000200.png coolwarm temp
 	mkdir -p data/temp/img
 	./plot_temps.sh $(MAX_LVL)
+
+vis_start_temp: update_txt
+	python3 vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/start_temp.png coolwarm temp
 
 update_txt: data/refine/base_grid.dat bin/translate
 	bin/translate data/refine/base_grid.dat data/refine/base_grid.txt
