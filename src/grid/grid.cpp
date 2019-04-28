@@ -143,8 +143,8 @@ CellIndex CellIndex::get_corner_neighbor(CornerNeigh n) {
     int h = 1 << (max_lvl - lvl - 1); // 2^(b-l)
     CellIndex c;
     c.lvl = lvl;
-    c.i   = i + ( ((n == CornerLU) || (n == CornerLD)) ? -h : h);
-    c.j   = j + ( ((n == CornerLD) || (n == CornerRD)) ? -h : h);
+    c.i   = i + ( ((n == LU) || (n == LD)) ? -h : h);
+    c.j   = j + ( ((n == LD) || (n == RD)) ? -h : h);
     return c;
 }
 
