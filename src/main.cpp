@@ -10,7 +10,7 @@ int write_freq = 100;
 string baseFolderTemp = "data/temp/";
 
 string gen_filename(string baseFolder, int n) {
-    string num = std::to_string(n);
+    string num(itoa(n));
     int max = 6;
     int additional = max - num.length();
     string res = string(additional, '0') + num;

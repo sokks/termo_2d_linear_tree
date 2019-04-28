@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <unistd.h>
 
-#include "../area/area.h"
+// #include "../area/area.h"
 #include "../grid/grid.h"
 
 using std::vector;
