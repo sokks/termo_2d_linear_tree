@@ -91,14 +91,14 @@ struct CellIndex {
 double dist(double x1, double y1, double x2, double y2);
 
 struct Cell: public CellIndex {
-    char refine_mark = 0;
+    char refine_mark;
     double temp[2]; // for cur and next
     vector<Cell *> neighs;
 
-    Cell() {}
-    Cell(int _lvl, GlobalNumber_t globalNumber): CellIndex(_lvl, globalNumber) {}
-    Cell(int _lvl, int _i, int _j): CellIndex(_lvl, _i, _j) {}
-    Cell(CellIndex ci, double _temp): CellIndex(ci) { temp[0] = _temp; temp[1] = 0.0; }
+    Cell() {refine_mark = 0;}
+    Cell(int _lvl, GlobalNumber_t globalNumber): CellIndex(_lvl, globalNumber) {refine_mark = 0;}
+    Cell(int _lvl, int _i, int _j): CellIndex(_lvl, _i, _j) {refine_mark = 0;}
+    Cell(CellIndex ci, double _temp): CellIndex(ci) { temp[0] = _temp; temp[1] = 0.0;refine_mark = 0; }
     Cell(const Cell& c): CellIndex(c.lvl, c.i, c.j) { temp[0] = c.temp[0]; temp[1] = c.temp[1]; refine_mark = c.refine_mark; }
     Cell& operator=(const Cell& c) { lvl = c.lvl; i = c.i; j = c.j; temp[0] = c.temp[0]; temp[1] = c.temp[1]; refine_mark = c.refine_mark; return *this; }
 

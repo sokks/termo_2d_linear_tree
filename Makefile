@@ -1,11 +1,12 @@
 # COMPILER=mpixlC
-COMPILER=mpicxx
+# COMPILER=mpicxx
+COMPILER=mpixlcxx_r
 OPTS=-O0
 
 BASE_LVL=9
 MAX_LVL=12
 
-N_PROCS=2
+N_PROCS=8
 
 TIME_STEPS=100
 
