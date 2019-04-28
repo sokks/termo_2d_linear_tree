@@ -18,7 +18,7 @@ string from_num(int n) {
 }
 
 string gen_filename(string baseFolder, int n) {
-    string num(itoa(n));
+    string num = from_num(n);
     int max = 6;
     int additional = max - num.length();
     string res = string(additional, '0') + num;
