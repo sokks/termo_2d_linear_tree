@@ -7,12 +7,14 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <list>
 
 #include "../area/area.h"
 
 using std::vector;
 using std::map;
 using std::string;
+using std::list;
 
 extern int    base_sz;
 extern double base_dx;
@@ -91,6 +93,7 @@ double dist(double x1, double y1, double x2, double y2);
 struct Cell: public CellIndex {
     char refine_mark = 0;
     double temp[2]; // for cur and next
+    vector<Cell *> neighs;
 
     Cell() {}
     Cell(int _lvl, GlobalNumber_t globalNumber): CellIndex(_lvl, globalNumber) {}
@@ -110,6 +113,13 @@ struct Cell: public CellIndex {
     void mark_to_refine() { refine_mark = 1; }
     vector<Cell> split();
 
+    size_t get_alloced_sz() {
+        size_t res = 0;
+        res += sizeof(CellIndex);
+        res += sizeof(double) * 2;
+        res += sizeof(Cell*) * neighs.size();
+        return res;
+    }
 };
 
 
@@ -123,7 +133,7 @@ struct LinearTree {
     LinearTree(string filename);
     LinearTree(double (*Temp_func)(double, double));
 
-    int FindCell(GlobalNumber_t target, Cell *cell);
+    int FindCell(GlobalNumber_t target, Cell **cell);
 
     // returns 1 if where are cells to refine and they can be refined, 0 otherwise
     int  MarkToRefine();

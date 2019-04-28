@@ -101,6 +101,10 @@ class Proc {
     vector<double> *ghosts_out_temps = nullptr;
 
     int active_neighs_num = 0;
+    vector<MPI_Request> send_reqs;
+    vector<MPI_Request> recv_reqs;
+    vector<MPI_Status> send_statuses;
+    vector<MPI_Status> recv_statuses;
 
 public:
     Proc();
@@ -114,21 +118,12 @@ public:
     int InitMesh();
     int InitMesh(string offsets_filename, string cells_filename);
 
-    /// MarkToRefine
-    void MarkToRefine();
-
-    // Refine измельчает помеченные ячейки
-    //
-    // Оперирует с линейным деревом, добавляя элементы-ячейки 
-    int Refine();
-
-    // LoadBalance балансирует нагрузку (линейное дерево) по процессорам
-    int LoadBalance();
-
     // BuildGhosts строит структуры для обмена границами
     int BuildGhosts();
     // ExchangeGhosts обменивается с соседями
     int ExchangeGhosts();
+
+    int BuildNeighs();
 
     // FillStart заполняет начальные заначения температуры
     void FillStart(double (*start_func)(double, double));
@@ -139,6 +134,8 @@ public:
     // I/O
     void WriteT(string filename);
     void WriteStat(string filename);
+
+    size_t GetProcAllocMem();
 
 private:
 

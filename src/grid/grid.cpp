@@ -26,7 +26,7 @@ void GridInit(int base_level, int max_level) {
     cout << "GRID PARAMS INITED" <<
             "\nmax_lvl=" << max_lvl <<
             "\nmin_dx=" << min_dx <<
-            "\nbase_lvl=" << base_sz <<
+            "\nbase_lvl=" << base_lvl <<
             "\nbase_dx=" << base_dx <<
             "\nbase_sz=" << base_sz << endl;
 }
@@ -613,7 +613,7 @@ LinearTree::LinearTree(double (*Temp_func)(double, double)) {
     }
 }
 
-int LinearTree::FindCell(GlobalNumber_t target, Cell *cell) {
+int LinearTree::FindCell(GlobalNumber_t target, Cell **cell) {
     // cout << "FindCell(" << target << ")\n";
 
     // binary search
@@ -626,7 +626,7 @@ int LinearTree::FindCell(GlobalNumber_t target, Cell *cell) {
 		if (val == target) {
 			// return midi;
             if (cell != nullptr) {
-                *cell = mid;
+                *cell = &mid;
             }
             return midi;
 		}
@@ -722,11 +722,13 @@ double get_grad(double w00, double w01, double w02,
 void LinearTree::DoRefine() {
     int i = 0;
     cout << "DoRefine start\n";
-    while (i < cells.size()) {
-        Cell c = cells[i];
+    list<Cell> tmp_cells(cells.begin(), cells.end());
+    auto it = tmp_cells.begin();
+    while (it != tmp_cells.end()) {
+        Cell& c = *it;
         // cout << "i=" << i << " Cell(" << c.lvl << ", " << c.i << "," << c.j << ", " << c.temp[0] << ")";
         if (c.refine_mark) {
-            cells.erase(cells.begin()+i);
+            it = tmp_cells.erase(it);
 
             vector<Cell> new_cells = c.split();
             // if (i < 200) {
@@ -737,13 +739,16 @@ void LinearTree::DoRefine() {
             //     cout << "Cell(" << new_cells[3].lvl << ", " << new_cells[3].i << "," << new_cells[3].j << ", " << new_cells[3].temp[0] << ")  ";
             // }
 
-            cells.insert(cells.begin()+(i), new_cells.begin(), new_cells.end());
-            i += 4;
+            tmp_cells.insert(it, new_cells.begin(), new_cells.end());
+            // std::advance(it, 4);
             
         } else {
-            i++;
+            // std::advance(it, 1);
+            it++;
         }
     }
+
+    cells = vector<Cell>(tmp_cells.begin(), tmp_cells.end());
 
     max_present_lvl++;
     cout << "DoRefine end\n";

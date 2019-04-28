@@ -26,8 +26,8 @@ int main(int argc, char **argv) {
     }
     int    base_level = atoi(argv[1]);
     int    max_level  = atoi(argv[2]);
-    string offsets_file  = argv[3];
-    string grid_file  = argv[4];
+    string offsets_file(argv[3]);
+    string grid_file(argv[4]);
     int    ts_n       = std::atoi(argv[5]);
 
     GridInit(base_level, max_level);
@@ -47,10 +47,14 @@ int main(int argc, char **argv) {
     // usleep(10000000);
 
     p.BuildGhosts();
+    p.BuildNeighs();
+
+    cout << "PROC_MEMORY=" << p.GetProcAllocMem() << endl;
 
     // usleep(10000000);
 
     for (int k = 0; k < ts_n; k++) {
+        cout << k  << endl;
         if (WRITE_LAYERS && (k%write_freq ==0)) {
             p.WriteT(gen_filename(baseFolderTemp, k));
         }

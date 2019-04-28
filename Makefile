@@ -5,9 +5,9 @@ OPTS=-O0
 BASE_LVL=9
 MAX_LVL=12
 
-N_PROCS=8
+N_PROCS=2
 
-TIME_STEPS=3000
+TIME_STEPS=100
 
 all: bin
 
@@ -29,7 +29,10 @@ gen_grid: bin/gen_grid
 	mkdir -p data/refine
 	bin/gen_grid $(BASE_LVL) $(MAX_LVL) data/refine/base_grid.dat $(N_PROCS) data/refine/offsets_$(N_PROCS).dat
 
-
+polus_job_gen_grid: bin/gen_grid
+	rm -rf data/refine/*
+	mkdir -p data/refine
+	mpisubmit.pl -p 1 bin/gen_grid -- $(BASE_LVL) $(MAX_LVL) data/refine/base_grid.dat $(N_PROCS) data/refine/offsets_$(N_PROCS).dat
 
 vis_base_grid: update_txt
 	python3 vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/grid_levels_$(BASE_LVL).png Greys lvls
