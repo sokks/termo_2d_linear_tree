@@ -119,7 +119,7 @@ public:
 
     /// InitMesh создает базовую структуру сетки
     int InitMesh();
-    int InitMesh(string offsets_filename, string cells_filename);
+    int InitMesh(char * offsets_filename, char * cells_filename);
 
     // BuildGhosts строит структуры для обмена границами
     int BuildGhosts();
@@ -135,7 +135,7 @@ public:
     void MakeStep();
 
     // I/O
-    void WriteT(string filename);
+    void WriteT(char * filename);
     void WriteStat(string filename);
 
     size_t GetProcAllocMem();

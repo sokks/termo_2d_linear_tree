@@ -19,13 +19,16 @@ string from_num(int n) {
     return a;
 }
 
-string gen_filename(string baseFolder, int n) {
+char * gen_filename(string baseFolder, int n) {
     string num = from_num(n);
     int max = 6;
     int additional = max - num.length();
     string res = string(additional, '0') + num;
     string fname = baseFolder + res + ".out";
-    return fname;
+
+    char *fmane_c = new char[fname.size()];
+    strcpy(fname_c, fname.c_str())
+    return fname_c;
 }
 
 
@@ -36,8 +39,8 @@ int main(int argc, char **argv) {
     }
     int    base_level = atoi(argv[1]);
     int    max_level  = atoi(argv[2]);
-    string offsets_file(argv[3]);
-    string grid_file(argv[4]);
+    char * offsets_file = argv[3];
+    char * grid_file = argv[4];
     int    ts_n       = std::atoi(argv[5]);
 
     GridInit(base_level, max_level);

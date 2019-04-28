@@ -143,7 +143,7 @@ int Proc::InitMesh() {
     return 0;
 }
 
-int Proc::InitMesh(string offsets_filename, string cells_filename) {
+int Proc::InitMesh(char * offsets_filename, char * cells_filename) {
     stat.timers["init_mesh"] = MpiTimer();
     stat.timers["init_mesh"].Start();
 
@@ -153,9 +153,7 @@ int Proc::InitMesh(string offsets_filename, string cells_filename) {
 
     MPI_File fh;
 
-    char *offsets_filename_tmp = offsets_filename.c_str();
-
-    MPI_File_open( mpiInfo.comm, offsets_filename_tmp, MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
+    MPI_File_open( mpiInfo.comm, offsets_filename, MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
     MPI_File_read_at(fh, 2 * mpiInfo.comm_rank * sizeof(int), &range, 2, MPI_INT, MPI_STATUS_IGNORE);
     MPI_File_close(&fh);
 
@@ -164,9 +162,7 @@ int Proc::InitMesh(string offsets_filename, string cells_filename) {
     vector<char> buffer(range[1], 1);
     std::cout << "will read cells file\n";
 
-    char *cells_filename_tmp = cells_filename.c_str();
-
-    MPI_File_open( mpiInfo.comm, cells_filename_tmp, MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
+    MPI_File_open( mpiInfo.comm, cells_filename, MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
     MPI_File_read_at(fh, range[0], &buffer[0], range[1]-1, MPI_CHAR, MPI_STATUS_IGNORE);
     MPI_File_close(&fh);
 
@@ -232,7 +228,8 @@ int Proc::BuildGhosts() {
         }
 
         // find their owners
-        for (GlobalNumber_t neigh: neigh_ids) {
+        for (int jjj = 0; jjj < neigh_ids.size(); jjj++) {
+            GlobalNumber_t neigh = neigh_ids[jjj];
             int owner = find_owner(neigh);
             if (owner == -1) {
                 continue;
@@ -700,7 +697,7 @@ void Proc::MakeStep() {
     // stat.timers["step"].Stop();
 }
 
-void Proc::WriteT(string filename) {
+void Proc::WriteT(char * filename) {
     stat.timers["io"].Start();
 
     vector<char> buf = mesh.GenWriteStruct();
@@ -717,9 +714,8 @@ void Proc::WriteT(string filename) {
     // std::cout << mpiInfo.comm_rank << " offset=" << offset << " wr_len=" << len << std::endl;
 
     MPI_File fh;
-    char *filename_tmp = filename.c_str();
     MPI_File_open( mpiInfo.comm, 
-                filename_tmp, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
+                filename, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
     MPI_File_write_at(fh, offset, &buf[0], len, MPI_CHAR, MPI_STATUS_IGNORE);
     MPI_File_close(&fh);
 
