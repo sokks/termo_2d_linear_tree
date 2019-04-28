@@ -468,7 +468,8 @@ vector<GlobalNumber_t> CellIndex::get_all_possible_neighbours_ids() {
     all_neighs_ids.reserve(all_neighs.size());
 
     // cout << "get_all_possible_neighbours_ids(" << lvl << "," << i << "," << j << ")= { ";
-    for (CellIndex c: all_neighs) {
+    for (int j = 0; j < all_neighs.size(); j++) {
+        CellIndex c = all_neighs[j];
         // cout << "(" << c.lvl << "," << c.i << "," << c.j << "), ";
         all_neighs_ids.push_back(c.get_global_number());
     }
@@ -537,22 +538,22 @@ void Cell::get_spacial_coords(double *x, double *y) {
 
 void Cell::get_border_cond(char *cond_type, double (**cond_func)(double, double, double)) {
     if (is_left_border()) { 
-        Area::get_border_cond(Area::Border::LEFT, cond_type, cond_func);
+        Area::get_border_cond(Area::LEFT, cond_type, cond_func);
         return;
     }
 
     if (is_right_border()) { 
-        Area::get_border_cond(Area::Border::RIGHT, cond_type, cond_func);
+        Area::get_border_cond(Area::RIGHT, cond_type, cond_func);
         return;
     }
 
     if (is_down_border()) { 
-        Area::get_border_cond(Area::Border::DOWN, cond_type, cond_func);
+        Area::get_border_cond(Area::DOWN, cond_type, cond_func);
         return;
     }
 
     if (is_upper_border()) { 
-        Area::get_border_cond(Area::Border::UP, cond_type, cond_func);
+        Area::get_border_cond(Area::UP, cond_type, cond_func);
         return;
     }
 
