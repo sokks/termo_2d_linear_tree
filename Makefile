@@ -1,7 +1,8 @@
 # COMPILER=mpixlC
-# COMPILER=mpicxx
+#COMPILER=mpicxx
 COMPILER=mpixlcxx_r
 OPTS=-O0
+#OPTS=-O0\ -qlanglvl=extended0x
 
 BASE_LVL=9
 MAX_LVL=12
@@ -35,6 +36,11 @@ polus_job_gen_grid: bin/gen_grid
 	mkdir -p data/refine
 	mpisubmit.pl -p 1 bin/gen_grid -- $(BASE_LVL) $(MAX_LVL) data/refine/base_grid.dat $(N_PROCS) data/refine/offsets_$(N_PROCS).dat
 
+bg_job_gen_grid: bin/gen_grid
+	rm -rf data/refine/*
+	mkdir -p data/refine
+	mpisubmit.bg -n 1 -m smp bin/gen_grid -- $(BASE_LVL) $(MAX_LVL) data/refine/base_grid.dat $(N_PROCS) data/refine/offsets_$(N_PROCS).dat
+
 vis_base_grid: update_txt
 	python3 vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/grid_levels_$(BASE_LVL).png Greys lvls
 	
@@ -64,6 +70,12 @@ job_mpi_polus: bin/test
 	rm -rf data/temp/*
 	mkdir -p data/temp
 	mpisubmit.pl -p $(N_PROCS) bin/test -- $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS)
+
+bg_job_run_mpi: bin/test
+	rm -rf data/temp/*
+	mkdir -p data/temp
+	mpisubmit.bg -n 1 -m smp bin/test -- $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS)
+
 
 bin/test: build/main.o build/area.o build/grid.o build/proc.o Makefile
 	mkdir -p bin
