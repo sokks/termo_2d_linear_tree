@@ -26,7 +26,7 @@ char * gen_filename(string baseFolder, int n) {
     string res = string(additional, '0') + num;
     string fname = baseFolder + res + ".out";
 
-    char *fmane_c = new char[fname.size()];
+    char *fname_c = new char[fname.size()];
     strcpy(fname_c, fname.c_str());
     return fname_c;
 }
