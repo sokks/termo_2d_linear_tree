@@ -763,7 +763,7 @@ void LinearTree::Write(string filename) {
     vector<char> buf = GenWriteStruct();
     int len = buf.size();
 
-    std::ofstream fout(filename, std::ios::out | std::ios::binary);
+    std::ofstream fout(filename.c_str(), std::ios::out | std::ios::binary);
     fout.write(&buf[0], len);
     fout.close();
 }
@@ -788,7 +788,7 @@ void LinearTree::WriteOffsets(string filename, int n_of_procs) {
     }
     cout << "}" << endl;
 
-    std::ofstream fout(filename, std::ios::out | std::ios::binary);
+    std::ofstream fout(filename.c_str(), std::ios::out | std::ios::binary);
     fout.write((char *)&offsets[0], offsets.size() * sizeof(int));
     fout.close();
 }
