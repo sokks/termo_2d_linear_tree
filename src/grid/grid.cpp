@@ -476,7 +476,7 @@ vector<GlobalNumber_t> CellIndex::get_all_possible_neighbours_ids() {
     // cout << " }" << endl;
 
     sort(all_neighs_ids.begin(), all_neighs_ids.end());
-    auto last = std::unique(all_neighs_ids.begin(), all_neighs_ids.end());
+    vector<GlobalNumber_t>::iterator last = std::unique(all_neighs_ids.begin(), all_neighs_ids.end());
     all_neighs_ids.erase(last, all_neighs_ids.end());
 
     return all_neighs_ids;
@@ -724,7 +724,7 @@ void LinearTree::DoRefine() {
     int i = 0;
     cout << "DoRefine start\n";
     list<Cell> tmp_cells(cells.begin(), cells.end());
-    auto it = tmp_cells.begin();
+    list<Cell>::iterator it = tmp_cells.begin();
     while (it != tmp_cells.end()) {
         Cell& c = *it;
         // cout << "i=" << i << " Cell(" << c.lvl << ", " << c.i << "," << c.j << ", " << c.temp[0] << ")";
@@ -796,7 +796,8 @@ void LinearTree::WriteOffsets(string filename, int n_of_procs) {
 vector<char> LinearTree::GenWriteStruct() {
     vector<char> buf;
     std::cout << " gen structs for write start\n";
-    for (Cell c: cells) {
+    for (int j = 0; j < cells.size(); j++) {
+        Cell c = cells[j];
         char *tmp = (char *)(&c.lvl);
         for (int i = 0; i < sizeof(int); i++) {
             buf.push_back(tmp[i]);
