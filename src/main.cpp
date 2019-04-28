@@ -9,6 +9,14 @@ bool WRITE_LAYERS = true;
 int write_freq = 100;
 string baseFolderTemp = "data/temp/";
 
+string from_num(int n) {
+    string a = "";
+    while (n > 0) {
+        a = string(1, char(n%10) + '0') + a;
+        n = n / 10;
+    }
+}
+
 string gen_filename(string baseFolder, int n) {
     string num(itoa(n));
     int max = 6;
