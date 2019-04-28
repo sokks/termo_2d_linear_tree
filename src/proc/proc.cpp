@@ -290,7 +290,7 @@ int Proc::BuildGhosts() {
     // cout << mpiInfo.comm_rank << " BuildGhosts here4\n";
 
     // обмениваемся idшниками ячеек от соседей и формируем LinearTree ячеек
-    vector<vector<GlobalNumber_t>> ghosts_in_ids_tmp(mpiInfo.comm_size);
+    vector<vector<GlobalNumber_t> > ghosts_in_ids_tmp(mpiInfo.comm_size);
     for (int i = 0; i < mpiInfo.comm_size; i++) {
         ghosts_in_ids_tmp[i] = vector<GlobalNumber_t>(in_lens[i]);
     }
@@ -342,7 +342,7 @@ int Proc::BuildGhosts() {
     // cout << mpiInfo.comm_rank << " BuildGhosts here5\n";
 
     // заполняем уровни ячеек
-    vector<vector<int>> ghosts_out_lvls_tmp(mpiInfo.comm_size);
+    vector<vector<int> > ghosts_out_lvls_tmp(mpiInfo.comm_size);
     for (int n = 0; n < mpiInfo.comm_size; n++ ) {
         for (int i = 0; i < out_lens[n]; i++) {
             Cell *c;
