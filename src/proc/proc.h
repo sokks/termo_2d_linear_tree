@@ -95,10 +95,10 @@ class Proc {
     FullMeta meta;
     LinearTree mesh;
 
-    vector<GlobalNumber_t> *ghosts_out_ids = nullptr;
-    LinearTree *ghosts_in  = nullptr;
-    vector<double> *ghosts_in_temps  = nullptr;
-    vector<double> *ghosts_out_temps = nullptr;
+    vector<GlobalNumber_t> *ghosts_out_ids = NULL;
+    LinearTree *ghosts_in  = NULL;
+    vector<double> *ghosts_in_temps  = NULL;
+    vector<double> *ghosts_out_temps = NULL;
 
     int active_neighs_num = 0;
     vector<MPI_Request> send_reqs;

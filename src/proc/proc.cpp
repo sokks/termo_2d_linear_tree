@@ -72,16 +72,16 @@ Proc::~Proc() {
 
     cout << mpiInfo.comm_rank << " DESTROYING PROC\n";
 
-    if (ghosts_out_ids != nullptr) {
+    if (ghosts_out_ids != NULL) {
         delete[] ghosts_out_ids;
     }
-    if (ghosts_in != nullptr) {
+    if (ghosts_in != NULL) {
         delete[] ghosts_in;
     }
-    if (ghosts_in_temps != nullptr) {
+    if (ghosts_in_temps != NULL) {
         delete[] ghosts_in_temps;
     }
-    if (ghosts_out_temps != nullptr) {
+    if (ghosts_out_temps != NULL) {
         delete[] ghosts_out_temps;
     }
 
@@ -752,10 +752,10 @@ size_t Proc::GetProcAllocMem() {
         res += c.get_alloced_sz();
     }
 
-    // vector<GlobalNumber_t> *ghosts_out_ids = nullptr;
-    // LinearTree *ghosts_in  = nullptr;
-    // vector<double> *ghosts_in_temps  = nullptr;
-    // vector<double> *ghosts_out_temps = nullptr;
+    // vector<GlobalNumber_t> *ghosts_out_ids = NULL;
+    // LinearTree *ghosts_in  = NULL;
+    // vector<double> *ghosts_in_temps  = NULL;
+    // vector<double> *ghosts_out_temps = NULL;
 
     res += sizeof(GlobalNumber_t) * ghosts_out_ids->size();
     res += sizeof(Cell) * ghosts_in->cells.size();

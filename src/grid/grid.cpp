@@ -625,7 +625,7 @@ int LinearTree::FindCell(GlobalNumber_t target, Cell **cell) {
         GlobalNumber_t val = mid.get_global_number();
 		if (val == target) {
 			// return midi;
-            if (cell != nullptr) {
+            if (cell != NULL) {
                 *cell = &mid;
             }
             return midi;
