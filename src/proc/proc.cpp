@@ -36,8 +36,8 @@ string MpiInfo::toString() {
 
 string Stat::toString() {
     std::ostringstream stringStream;
-    for (auto t: timers) {
-        stringStream << t.first << ": " << t.second.FullDur() << std::endl;
+    for (map<string, MpiTimer>::iterator it = timers.begin(); it != timers.end(); it++) {
+        stringStream << it->first << ": " << it->second.FullDur() << std::endl;
     }
     return stringStream.str();
 }
@@ -152,7 +152,10 @@ int Proc::InitMesh(string offsets_filename, string cells_filename) {
     int one_sz = 3 * sizeof(int) + sizeof(double);
 
     MPI_File fh;
-    MPI_File_open( mpiInfo.comm, offsets_filename.c_str(), MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
+
+    char *offsets_filename_tmp = offsets_filename.c_str();
+
+    MPI_File_open( mpiInfo.comm, offsets_filename_tmp, MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
     MPI_File_read_at(fh, 2 * mpiInfo.comm_rank * sizeof(int), &range, 2, MPI_INT, MPI_STATUS_IGNORE);
     MPI_File_close(&fh);
 
@@ -161,7 +164,9 @@ int Proc::InitMesh(string offsets_filename, string cells_filename) {
     vector<char> buffer(range[1], 1);
     std::cout << "will read cells file\n";
 
-    MPI_File_open( mpiInfo.comm, cells_filename.c_str(), MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
+    char *cells_filename_tmp = cells_filename.c_str();
+
+    MPI_File_open( mpiInfo.comm, cells_filename_tmp, MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
     MPI_File_read_at(fh, range[0], &buffer[0], range[1]-1, MPI_CHAR, MPI_STATUS_IGNORE);
     MPI_File_close(&fh);
 
@@ -212,7 +217,8 @@ int Proc::BuildGhosts() {
 
     // cout << mpiInfo.comm_rank << " BuildGhosts here1\n";
 
-    for (Cell c: mesh.cells) {
+    for (int cc = 0; cc < mesh.cells.size(); cc++) {
+        Cell c = mesh.cells[cc];
         vector<Cell> neighs;
         
         vector<GlobalNumber_t> neigh_ids = c.get_all_possible_neighbours_ids();
@@ -515,7 +521,8 @@ int Proc::BuildNeighs() {
         vector<GlobalNumber_t> possible_neigh_ids = cell.get_all_possible_neighbours_ids();
         stat.timers["get_possible_neighs"].Stop();
 
-        for (GlobalNumber_t id: possible_neigh_ids) {
+        for (int jjj = 0; jjj < possible_neigh_ids.size(); jjj++) {
+            GlobalNumber_t id = possible_neigh_ids[jjj];
             int owner = find_owner(id);
             if (owner == -1) {
                 continue;
@@ -598,9 +605,8 @@ void Proc::MakeStep() {
         // vector<double> termo_flows;
         double flows_sum = 0.0;
         
-        for (Cell* neigh_cell_1: cell.neighs) {
-            
-            Cell& neigh_cell = *neigh_cell_1;
+        for (int jjj = 0; jjj < cell.neighs.size(); jjj++) {
+            Cell& neigh_cell = *(cell.neighs[i]);
 
             double neigh_x, neigh_y;
             neigh_cell.get_spacial_coords(&neigh_x, &neigh_y);
@@ -711,8 +717,9 @@ void Proc::WriteT(string filename) {
     // std::cout << mpiInfo.comm_rank << " offset=" << offset << " wr_len=" << len << std::endl;
 
     MPI_File fh;
+    char *filename_tmp = filename.c_str();
     MPI_File_open( mpiInfo.comm, 
-                filename.c_str(), MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
+                filename_tmp, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
     MPI_File_write_at(fh, offset, &buf[0], len, MPI_CHAR, MPI_STATUS_IGNORE);
     MPI_File_close(&fh);
 
@@ -756,7 +763,8 @@ void Proc::PrintGhostCells() {
 
 size_t Proc::GetProcAllocMem() {
     size_t res = 0;
-    for (Cell &c: mesh.cells) {
+    for (int jjj = 0; jjj < mesh.cells.size(); jjj++) {
+        Cell &c = mesh.cells[jjj];
         res += c.get_alloced_sz();
     }
 

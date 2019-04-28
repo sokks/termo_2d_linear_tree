@@ -15,6 +15,8 @@ string from_num(int n) {
         a = string(1, char(n%10) + '0') + a;
         n = n / 10;
     }
+
+    return a;
 }
 
 string gen_filename(string baseFolder, int n) {
