@@ -102,7 +102,7 @@ class Proc {
     vector<double> *ghosts_in_temps;
     vector<double> *ghosts_out_temps;
 
-    int active_neighs_num = 0;
+    int active_neighs_num;
     vector<MPI_Request> send_reqs;
     vector<MPI_Request> recv_reqs;
     vector<MPI_Status> send_statuses;

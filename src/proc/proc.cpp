@@ -60,6 +60,7 @@ Proc::Proc() {
     ghosts_in  = NULL;
     ghosts_in_temps  = NULL;
     ghosts_out_temps = NULL;
+    active_neighs_num = 0;
 
 
     stat.timers["total"] = MpiTimer();
