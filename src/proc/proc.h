@@ -6,6 +6,7 @@
 #include <sstream>
 #include <algorithm>
 #include <unistd.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 // #include "../area/area.h"
