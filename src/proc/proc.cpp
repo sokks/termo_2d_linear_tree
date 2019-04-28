@@ -55,6 +55,13 @@ string MetaInfo::toString() {
 /* * * * * * * * * * * РАБОТА ПРОЦЕССА * * * * * * * * * * */
 
 Proc::Proc() {
+    time_step_n = 0;
+    ghosts_out_ids = NULL;
+    ghosts_in  = NULL;
+    ghosts_in_temps  = NULL;
+    ghosts_out_temps = NULL;
+
+
     stat.timers["total"] = MpiTimer();
     stat.timers["io"] = MpiTimer();
     stat.timers["build_ghosts"] = MpiTimer();

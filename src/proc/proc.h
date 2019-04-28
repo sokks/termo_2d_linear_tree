@@ -86,7 +86,7 @@ class Proc {
     MpiInfo mpiInfo;
     Stat    stat;
 
-    int time_step_n = 0;
+    int time_step_n;
 
     
     GlobalNumber_t totalG;
@@ -95,10 +95,10 @@ class Proc {
     FullMeta meta;
     LinearTree mesh;
 
-    vector<GlobalNumber_t> *ghosts_out_ids = NULL;
-    LinearTree *ghosts_in  = NULL;
-    vector<double> *ghosts_in_temps  = NULL;
-    vector<double> *ghosts_out_temps = NULL;
+    vector<GlobalNumber_t> *ghosts_out_ids;
+    LinearTree *ghosts_in;
+    vector<double> *ghosts_in_temps;
+    vector<double> *ghosts_out_temps;
 
     int active_neighs_num = 0;
     vector<MPI_Request> send_reqs;
