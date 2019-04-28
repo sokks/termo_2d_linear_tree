@@ -87,13 +87,13 @@ CellIndex CellIndex::get_child(Child c) {
     child.lvl = lvl+1;
     int h = 1 << (max_lvl - child.lvl);
 
-    if (c == Child::cLD) {        // (0,0)
+    if (c == cLD) {        // (0,0)
         child.i = i;
         child.j = j;
-    } else if (c == Child::cRD) { // (0,1)
+    } else if (c == cRD) { // (0,1)
         child.i = i;
         child.j = j + h;
-    } else if (c == Child::cLU) { // (1,0)
+    } else if (c == cLU) { // (1,0)
         child.i = i + h;
         child.j = j;
     } else {                     // (1,1)
@@ -116,26 +116,26 @@ Child CellIndex::get_child_pos() {
     int hi = i & (1 << (max_lvl - lvl));
     int hj = j & (1 << (max_lvl - lvl));
     if ((hi == 0) && (hj == 0)) {
-        return Child::cLD;
+        return cLD;
     }
     if ((hi == 0) && (hj != 0)) {
-        return Child::cRD;
+        return cRD;
     }
     if ((hi != 0) && (hj == 0)) {
-        return Child::cLU;
+        return cLU;
     }
     if ((hi != 0) && (hj != 0)) {
-        return Child::cRU;
+        return cRU;
     }
-    return Child::cLD;
+    return cLD;
 }
 
 CellIndex CellIndex::get_face_neighbor(Neigh n) {
     int h = 1 << (max_lvl - lvl); // 2^(b-l)
     CellIndex c;
     c.lvl = lvl;
-    c.i   = i + ((n == Neigh::DOWN) ? -h : (n == Neigh::UP) ? h : 0);
-    c.j   = j + ((n == Neigh::LEFT) ? -h : (n == Neigh::RIGHT) ? h : 0);
+    c.i   = i + ((n == DOWN) ? -h : (n == UP) ? h : 0);
+    c.j   = j + ((n == LEFT) ? -h : (n == RIGHT) ? h : 0);
     return c;
 }
 
@@ -143,8 +143,8 @@ CellIndex CellIndex::get_corner_neighbor(CornerNeigh n) {
     int h = 1 << (max_lvl - lvl - 1); // 2^(b-l)
     CellIndex c;
     c.lvl = lvl;
-    c.i   = i + ( ((n == CornerNeigh::LU) || (n == CornerNeigh::LD)) ? -h : h);
-    c.j   = j + ( ((n == CornerNeigh::LD) || (n == CornerNeigh::RD)) ? -h : h);
+    c.i   = i + ( ((n == CornerLU) || (n == CornerLD)) ? -h : h);
+    c.j   = j + ( ((n == CornerLD) || (n == CornerRD)) ? -h : h);
     return c;
 }
 
@@ -152,8 +152,8 @@ vector<CellIndex> CellIndex::get_larger_possible_face_neighbour(Neigh n) {
     vector<CellIndex> ret;
 
     Child my_pos = get_child_pos();
-    if (n == Neigh::RIGHT) {
-        if ((my_pos == Child::cLD) || (my_pos == Child::cLU)) {
+    if (n == RIGHT) {
+        if ((my_pos == cLD) || (my_pos == cLU)) {
             return ret;
         }
         CellIndex c = get_parent();
@@ -161,8 +161,8 @@ vector<CellIndex> CellIndex::get_larger_possible_face_neighbour(Neigh n) {
         return ret;
     }
 
-    if (n == Neigh::LEFT) {
-        if ((my_pos == Child::cRD) || (my_pos == Child::cRU)) {
+    if (n == LEFT) {
+        if ((my_pos == cRD) || (my_pos == cRU)) {
             return ret;
         }
         CellIndex c = get_parent();
@@ -170,8 +170,8 @@ vector<CellIndex> CellIndex::get_larger_possible_face_neighbour(Neigh n) {
         return ret;
     }
 
-    if (n == Neigh::UP) {
-        if ((my_pos == Child::cLD) || (my_pos == Child::cRD)) {
+    if (n == UP) {
+        if ((my_pos == cLD) || (my_pos == cRD)) {
             return ret;
         }
         CellIndex c = get_parent();
@@ -179,8 +179,8 @@ vector<CellIndex> CellIndex::get_larger_possible_face_neighbour(Neigh n) {
         return ret;
     }
     
-    if (n == Neigh::DOWN) {
-        if ((my_pos == Child::cLU) || (my_pos == Child::cRU)) {
+    if (n == DOWN) {
+        if ((my_pos == cLU) || (my_pos == cRU)) {
             return ret;
         }
         CellIndex c = get_parent();
@@ -193,8 +193,8 @@ vector<CellIndex> CellIndex::get_larger_possible_face_neighbour(Neigh n) {
 
 vector<CellIndex>& CellIndex::get_larger_possible_face_neighbour_optimized(vector<CellIndex>& buf, Neigh n) {
     Child my_pos = get_child_pos();
-    if (n == Neigh::RIGHT) {
-        if ((my_pos == Child::cLD) || (my_pos == Child::cLU)) {
+    if (n == RIGHT) {
+        if ((my_pos == cLD) || (my_pos == cLU)) {
             return buf;
         }
         CellIndex c = get_parent();
@@ -202,8 +202,8 @@ vector<CellIndex>& CellIndex::get_larger_possible_face_neighbour_optimized(vecto
         return buf;
     }
 
-    if (n == Neigh::LEFT) {
-        if ((my_pos == Child::cRD) || (my_pos == Child::cRU)) {
+    if (n == LEFT) {
+        if ((my_pos == cRD) || (my_pos == cRU)) {
             return buf;
         }
         CellIndex c = get_parent();
@@ -211,8 +211,8 @@ vector<CellIndex>& CellIndex::get_larger_possible_face_neighbour_optimized(vecto
         return buf;
     }
 
-    if (n == Neigh::UP) {
-        if ((my_pos == Child::cLD) || (my_pos == Child::cRD)) {
+    if (n == UP) {
+        if ((my_pos == cLD) || (my_pos == cRD)) {
             return buf;
         }
         CellIndex c = get_parent();
@@ -220,8 +220,8 @@ vector<CellIndex>& CellIndex::get_larger_possible_face_neighbour_optimized(vecto
         return buf;
     }
     
-    if (n == Neigh::DOWN) {
-        if ((my_pos == Child::cLU) || (my_pos == Child::cRU)) {
+    if (n == DOWN) {
+        if ((my_pos == cLU) || (my_pos == cRU)) {
             return buf;
         }
         CellIndex c = get_parent();
@@ -236,23 +236,23 @@ vector<CellIndex> CellIndex::get_larger_possible_corner_neighbour(CornerNeigh n)
     vector<CellIndex> ret;
 
     Child my_pos = get_child_pos();
-    if (n == CornerNeigh::LD) {
-        if (my_pos != Child::cRU) {
+    if (n == LD) {
+        if (my_pos != cRU) {
             return ret;
         }
     }
-    if (n == CornerNeigh::LU) {
-        if (my_pos != Child::cRD) {
+    if (n == LU) {
+        if (my_pos != cRD) {
             return ret;
         }
     }
-    if (n == CornerNeigh::LD) {
-        if (my_pos != Child::cRU) {
+    if (n == LD) {
+        if (my_pos != cRU) {
             return ret;
         }
     }
-    if (n == CornerNeigh::LD) {
-        if (my_pos != Child::cRU) {
+    if (n == LD) {
+        if (my_pos != cRU) {
             return ret;
         }
     }
@@ -266,24 +266,24 @@ vector<CellIndex> CellIndex::get_halfsize_possible_face_neighbours(Neigh n) {
     CellIndex fullSizeNeigh = get_face_neighbor(n);
     vector<CellIndex> halfSizeNeighs;
     halfSizeNeighs.reserve( 2 );
-    if (n == Neigh::DOWN) {
-        halfSizeNeighs.push_back(fullSizeNeigh.get_child(Child::cLU));
-        halfSizeNeighs.push_back(fullSizeNeigh.get_child(Child::cRU));
+    if (n == DOWN) {
+        halfSizeNeighs.push_back(fullSizeNeigh.get_child(cLU));
+        halfSizeNeighs.push_back(fullSizeNeigh.get_child(cRU));
         return halfSizeNeighs;
     }
-    if (n == Neigh::UP) {
-        halfSizeNeighs.push_back(fullSizeNeigh.get_child(Child::cLD));
-        halfSizeNeighs.push_back(fullSizeNeigh.get_child(Child::cRD));
+    if (n == UP) {
+        halfSizeNeighs.push_back(fullSizeNeigh.get_child(cLD));
+        halfSizeNeighs.push_back(fullSizeNeigh.get_child(cRD));
         return halfSizeNeighs;
     }
-    if (n == Neigh::LEFT) {
-        halfSizeNeighs.push_back(fullSizeNeigh.get_child(Child::cRU));
-        halfSizeNeighs.push_back(fullSizeNeigh.get_child(Child::cRD));
+    if (n == LEFT) {
+        halfSizeNeighs.push_back(fullSizeNeigh.get_child(cRU));
+        halfSizeNeighs.push_back(fullSizeNeigh.get_child(cRD));
         return halfSizeNeighs;
     }
-    if (n == Neigh::RIGHT) {
-        halfSizeNeighs.push_back(fullSizeNeigh.get_child(Child::cLU));
-        halfSizeNeighs.push_back(fullSizeNeigh.get_child(Child::cLD));
+    if (n == RIGHT) {
+        halfSizeNeighs.push_back(fullSizeNeigh.get_child(cLU));
+        halfSizeNeighs.push_back(fullSizeNeigh.get_child(cLD));
         return halfSizeNeighs;
     }
     return halfSizeNeighs;
@@ -291,24 +291,24 @@ vector<CellIndex> CellIndex::get_halfsize_possible_face_neighbours(Neigh n) {
 
 vector<CellIndex>& CellIndex::get_halfsize_possible_face_neighbours_optimized(vector<CellIndex>& buf, Neigh n) {
     CellIndex fullSizeNeigh = get_face_neighbor(n);
-    if (n == Neigh::DOWN) {
-        buf.push_back(fullSizeNeigh.get_child(Child::cLU));
-        buf.push_back(fullSizeNeigh.get_child(Child::cRU));
+    if (n == DOWN) {
+        buf.push_back(fullSizeNeigh.get_child(cLU));
+        buf.push_back(fullSizeNeigh.get_child(cRU));
         return buf;
     }
-    if (n == Neigh::UP) {
-        buf.push_back(fullSizeNeigh.get_child(Child::cLD));
-        buf.push_back(fullSizeNeigh.get_child(Child::cRD));
+    if (n == UP) {
+        buf.push_back(fullSizeNeigh.get_child(cLD));
+        buf.push_back(fullSizeNeigh.get_child(cRD));
         return buf;
     }
-    if (n == Neigh::LEFT) {
-        buf.push_back(fullSizeNeigh.get_child(Child::cRU));
-        buf.push_back(fullSizeNeigh.get_child(Child::cRD));
+    if (n == LEFT) {
+        buf.push_back(fullSizeNeigh.get_child(cRU));
+        buf.push_back(fullSizeNeigh.get_child(cRD));
         return buf;
     }
-    if (n == Neigh::RIGHT) {
-        buf.push_back(fullSizeNeigh.get_child(Child::cLU));
-        buf.push_back(fullSizeNeigh.get_child(Child::cLD));
+    if (n == RIGHT) {
+        buf.push_back(fullSizeNeigh.get_child(cLU));
+        buf.push_back(fullSizeNeigh.get_child(cLD));
         return buf;
     }
 
@@ -318,20 +318,20 @@ vector<CellIndex>& CellIndex::get_halfsize_possible_face_neighbours_optimized(ve
 vector<CellIndex> CellIndex::get_halfsize_possible_corner_neighbours(CornerNeigh n) {
     CellIndex fullSizeNeigh = get_corner_neighbor(n);
     vector<CellIndex> halfSizeNeighs;
-    if (n == CornerNeigh::LU) {
-        halfSizeNeighs.push_back(fullSizeNeigh.get_child(Child::cRD));
+    if (n == LU) {
+        halfSizeNeighs.push_back(fullSizeNeigh.get_child(cRD));
         return halfSizeNeighs;
     }
-    if (n == CornerNeigh::RU) {
-        halfSizeNeighs.push_back(fullSizeNeigh.get_child(Child::cLD));
+    if (n == RU) {
+        halfSizeNeighs.push_back(fullSizeNeigh.get_child(cLD));
         return halfSizeNeighs;
     }
-    if (n == CornerNeigh::LD) {
-        halfSizeNeighs.push_back(fullSizeNeigh.get_child(Child::cRU));
+    if (n == LD) {
+        halfSizeNeighs.push_back(fullSizeNeigh.get_child(cRU));
         return halfSizeNeighs;
     }
-    if (n == CornerNeigh::RD) {
-        halfSizeNeighs.push_back(fullSizeNeigh.get_child(Child::cLU));
+    if (n == RD) {
+        halfSizeNeighs.push_back(fullSizeNeigh.get_child(cLU));
         return halfSizeNeighs;
     }
     return halfSizeNeighs;
@@ -342,16 +342,16 @@ vector<CellIndex> CellIndex::get_all_halfsize_possible_neighs() {
     res.reserve( 8 );
 
     if (!is_left_border()) {
-        res = get_halfsize_possible_face_neighbours_optimized(res, Neigh::LEFT);
+        res = get_halfsize_possible_face_neighbours_optimized(res, LEFT);
     }
     if (!is_right_border()) {
-        res = get_halfsize_possible_face_neighbours_optimized(res, Neigh::RIGHT);
+        res = get_halfsize_possible_face_neighbours_optimized(res, RIGHT);
     }
     if (!is_upper_border()) {
-        res = get_halfsize_possible_face_neighbours_optimized(res, Neigh::UP);
+        res = get_halfsize_possible_face_neighbours_optimized(res, UP);
     }
     if (!is_down_border()) {
-        res = get_halfsize_possible_face_neighbours_optimized(res, Neigh::DOWN);
+        res = get_halfsize_possible_face_neighbours_optimized(res, DOWN);
     }
 
     return res;
@@ -360,16 +360,16 @@ vector<CellIndex> CellIndex::get_all_halfsize_possible_neighs() {
 vector<CellIndex>& CellIndex::get_all_halfsize_possible_neighs_optimized(vector<CellIndex>& buf) {
 
     if (!is_left_border()) {
-        buf = get_halfsize_possible_face_neighbours_optimized(buf, Neigh::LEFT);
+        buf = get_halfsize_possible_face_neighbours_optimized(buf, LEFT);
     }
     if (!is_right_border()) {
-        buf = get_halfsize_possible_face_neighbours_optimized(buf, Neigh::RIGHT);
+        buf = get_halfsize_possible_face_neighbours_optimized(buf, RIGHT);
     }
     if (!is_upper_border()) {
-        buf = get_halfsize_possible_face_neighbours_optimized(buf, Neigh::UP);
+        buf = get_halfsize_possible_face_neighbours_optimized(buf, UP);
     }
     if (!is_down_border()) {
-        buf = get_halfsize_possible_face_neighbours_optimized(buf, Neigh::DOWN);
+        buf = get_halfsize_possible_face_neighbours_optimized(buf, DOWN);
     }
 
     return buf;
@@ -380,16 +380,16 @@ vector<CellIndex> CellIndex::get_all_samesize_possible_neighs() {
     res.reserve( 4 );
 
     if (!is_left_border()) {
-        res.push_back(get_face_neighbor(Neigh::LEFT));
+        res.push_back(get_face_neighbor(LEFT));
     }
     if (!is_right_border()) {
-        res.push_back(get_face_neighbor(Neigh::RIGHT));
+        res.push_back(get_face_neighbor(RIGHT));
     }
     if (!is_down_border()) {
-        res.push_back(get_face_neighbor(Neigh::DOWN));
+        res.push_back(get_face_neighbor(DOWN));
     }
     if (!is_upper_border()) {
-        res.push_back(get_face_neighbor(Neigh::UP));
+        res.push_back(get_face_neighbor(UP));
     }
 
     return res;
@@ -398,16 +398,16 @@ vector<CellIndex> CellIndex::get_all_samesize_possible_neighs() {
 vector<CellIndex>& CellIndex::get_all_samesize_possible_neighs_optimized(vector<CellIndex>& buf) {
 
     if (!is_left_border()) {
-        buf.push_back(get_face_neighbor(Neigh::LEFT));
+        buf.push_back(get_face_neighbor(LEFT));
     }
     if (!is_right_border()) {
-        buf.push_back(get_face_neighbor(Neigh::RIGHT));
+        buf.push_back(get_face_neighbor(RIGHT));
     }
     if (!is_down_border()) {
-        buf.push_back(get_face_neighbor(Neigh::DOWN));
+        buf.push_back(get_face_neighbor(DOWN));
     }
     if (!is_upper_border()) {
-        buf.push_back(get_face_neighbor(Neigh::UP));
+        buf.push_back(get_face_neighbor(UP));
     }
 
     return buf;
@@ -418,16 +418,16 @@ vector<CellIndex> CellIndex::get_all_larger_possible_neighs() {
     res.reserve(4);
 
     if (!is_left_border()) {
-        res = get_larger_possible_face_neighbour_optimized(res, Neigh::LEFT);
+        res = get_larger_possible_face_neighbour_optimized(res, LEFT);
     }
     if (!is_right_border()) {
-        res = get_larger_possible_face_neighbour_optimized(res, Neigh::RIGHT);
+        res = get_larger_possible_face_neighbour_optimized(res, RIGHT);
     }
     if (!is_upper_border()) {
-        res = get_larger_possible_face_neighbour_optimized(res, Neigh::UP);
+        res = get_larger_possible_face_neighbour_optimized(res, UP);
     }
     if (!is_down_border()) {
-        res = get_larger_possible_face_neighbour_optimized(res, Neigh::DOWN);
+        res = get_larger_possible_face_neighbour_optimized(res, DOWN);
     }
 
     return res;
@@ -436,16 +436,16 @@ vector<CellIndex> CellIndex::get_all_larger_possible_neighs() {
 vector<CellIndex>& CellIndex::get_all_larger_possible_neighs_optimized(vector<CellIndex>& buf) {
 
     if (!is_left_border()) {
-        buf = get_larger_possible_face_neighbour_optimized(buf, Neigh::LEFT);
+        buf = get_larger_possible_face_neighbour_optimized(buf, LEFT);
     }
     if (!is_right_border()) {
-        buf = get_larger_possible_face_neighbour_optimized(buf, Neigh::RIGHT);
+        buf = get_larger_possible_face_neighbour_optimized(buf, RIGHT);
     }
     if (!is_upper_border()) {
-        buf = get_larger_possible_face_neighbour_optimized(buf, Neigh::UP);
+        buf = get_larger_possible_face_neighbour_optimized(buf, UP);
     }
     if (!is_down_border()) {
-        buf = get_larger_possible_face_neighbour_optimized(buf, Neigh::DOWN);
+        buf = get_larger_possible_face_neighbour_optimized(buf, DOWN);
     }
 
     return buf;
@@ -482,22 +482,22 @@ vector<GlobalNumber_t> CellIndex::get_all_possible_neighbours_ids() {
 }
 
 bool CellIndex::is_left_border() {
-    CellIndex c = get_face_neighbor(Neigh::LEFT);
+    CellIndex c = get_face_neighbor(LEFT);
     return (c.j < 0);
 }
 
 bool CellIndex::is_right_border() {
-    CellIndex c = get_face_neighbor(Neigh::RIGHT);
+    CellIndex c = get_face_neighbor(RIGHT);
     return ((c.j & (-1 << max_lvl)) != 0);
 }
 
 bool CellIndex::is_upper_border() {
-    CellIndex c = get_face_neighbor(Neigh::UP);
+    CellIndex c = get_face_neighbor(UP);
     return ((c.i & (-1 << max_lvl)) != 0);
 }
 
 bool CellIndex::is_down_border() {
-    CellIndex c = get_face_neighbor(Neigh::DOWN);
+    CellIndex c = get_face_neighbor(DOWN);
     return (c.i < 0);
 }
 
@@ -562,26 +562,26 @@ void Cell::get_border_cond(char *cond_type, double (**cond_func)(double, double,
 vector<Cell> Cell::split() {
     vector<Cell> children;
     
-    CellIndex ci00 = ((CellIndex)(*this)).get_child(Child::cLD);
+    CellIndex ci00 = ((CellIndex)(*this)).get_child(cLD);
     Cell c00 = Cell(ci00, 0.0);
     double x, y;
     c00.get_spacial_coords(&x, &y);
     c00.temp[0] = Area::T0(x, y);
     children.push_back(c00);
 
-    CellIndex ci01 = ((CellIndex)(*this)).get_child(Child::cRD);
+    CellIndex ci01 = ((CellIndex)(*this)).get_child(cRD);
     Cell c01 = Cell(ci01, 0.0);
     c01.get_spacial_coords(&x, &y);
     c01.temp[0] = Area::T0(x, y);
     children.push_back(c01);
 
-    CellIndex ci10 = ((CellIndex)(*this)).get_child(Child::cLU);
+    CellIndex ci10 = ((CellIndex)(*this)).get_child(cLU);
     Cell c10 = Cell(ci10, 0.0);
     c10.get_spacial_coords(&x, &y);
     c10.temp[0] = Area::T0(x, y);
     children.push_back(c10);
 
-    CellIndex ci11 = ((CellIndex)(*this)).get_child(Child::cRU);
+    CellIndex ci11 = ((CellIndex)(*this)).get_child(cRU);
     Cell c11 = Cell(ci11, 0.0);
     c11.get_spacial_coords(&x, &y);
     c11.temp[0] = Area::T0(x, y);
