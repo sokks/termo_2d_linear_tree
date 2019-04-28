@@ -245,7 +245,7 @@ int Proc::BuildGhosts() {
     // сортируем и удаляем повторения
     for (int i = 0; i < mpiInfo.comm_size; i++) {
         std::sort(ghosts_out_ids[i].begin(), ghosts_out_ids[i].end());
-        auto last = std::unique(ghosts_out_ids[i].begin(), ghosts_out_ids[i].end());
+        vector<GlobalNumber_t>::iterator last = std::unique(ghosts_out_ids[i].begin(), ghosts_out_ids[i].end());
         ghosts_out_ids[i].erase(last, ghosts_out_ids[i].end());
     }
 
