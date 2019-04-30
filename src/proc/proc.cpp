@@ -175,7 +175,7 @@ int Proc::InitMesh(char * offsets_filename, char * cells_filename) {
     if (ierr != MPI_SUCCESS) {
         MPI_Error_class(ierr, &errclass);
         MPI_Error_string(ierr, err_buffer, &errlen);
-        fprintf(stderr, err_buffer);
+        fprintf(stderr, "%s", err_buffer);
         std::cout << mpiInfo.comm_rank  << " read error: " << err_buffer << std::endl;
         MPI_Abort(mpiInfo.comm, 1);
     }
