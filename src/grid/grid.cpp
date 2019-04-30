@@ -837,6 +837,7 @@ void LinearTree::GenFromWriteStruct(vector<char>& buf) {
     int temp_offset = 3 * sizeof(int);
 
     while (pos < buf.size()) {
+        cout << "pos=" << pos << endl;
         Cell c;
         c.lvl  = * ((int *)(&p[pos+lvl_offset]));
         c.i    = * ((int *)(&p[pos+i_offset]));
