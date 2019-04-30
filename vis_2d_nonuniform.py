@@ -62,18 +62,22 @@ if plot_dat == 'lvls':
 elif plot_dat == 'procs':
     n_procs = int(sys.argv[6])
 
-    viridis = cm.get_cmap(cmap_name, 100)
+    viridis = cm.get_cmap(cmap_name)
     newcolors = viridis(np.linspace(0, 1, n_procs))
     cmp = ListedColormap(newcolors)
     tcks = [i for i in range(n_procs)]
     cbar_label = 'processor number'
+    v_min, v_max = 0, n_procs-1
 
     C = []
     sum = 0
     for p in range(n_procs-1):
+        print(sum)
         C += [p for i in range (len(X)//n_procs)]
         sum += len(X)//n_procs
-    C += [n_procs for i in range (len(X) - sum)]
+        # print(C)
+    C += [n_procs-1 for i in range (len(X) - sum)]
+    # print(C)
     C = np.array(C)
     print(len(X), len(Y), len(C))
     zi = griddata((Y, X), C, (xi[None,:], yi[:,None]), method='nearest')

@@ -654,9 +654,9 @@ int LinearTree::MarkToRefine() {
     for (int i = 0; i < cells.size(); i++) {
         Cell c = cells[i];
 
-        if (c.is_border()) {
-            continue;
-        }
+        // if (c.is_border()) {
+        //     continue;
+        // }
 
         // vector<GlobalNumber_t> neighs = c.get_all_possible_neighbours_ids();
         // vector<double> vals = get_square_vals(neighs);
@@ -671,6 +671,7 @@ int LinearTree::MarkToRefine() {
         // }
         double x, y;
         c.get_spacial_coords(&x, &y);
+        // cout << c.get_global_number() << " " << x << " " << y << endl;
 
         if ((max_present_lvl == base_lvl) && (Area::Refine1(x, y))) {
             cells[i].mark_to_refine();
@@ -724,14 +725,26 @@ void LinearTree::DoRefine() {
     int i = 0;
     cout << "DoRefine start\n";
     list<Cell> tmp_cells(cells.begin(), cells.end());
+
+    // for (auto it = tmp_cells.begin(); it != tmp_cells.end(); it++) {
+    //     cout << it->get_global_number() << ":" << int(it->refine_mark) << " ";
+    // }
+    // cout << endl;
+    
+
     list<Cell>::iterator it = tmp_cells.begin();
     while (it != tmp_cells.end()) {
         Cell& c = *it;
         // cout << "i=" << i << " Cell(" << c.lvl << ", " << c.i << "," << c.j << ", " << c.temp[0] << ")";
         if (c.refine_mark) {
-            it = tmp_cells.erase(it);
-
+            // cout << "will refine " << c.get_global_number() << " " << it->get_global_number() << endl;
             vector<Cell> new_cells = c.split();
+            it = tmp_cells.erase(it);
+            // cout << "it->" << it->get_global_number() << endl;
+            // for (auto it = tmp_cells.begin(); it != tmp_cells.end(); it++) {
+            //     cout << it->get_global_number() << ":" << int(it->refine_mark) << " ";
+            // }
+            // cout << endl;
             // if (i < 200) {
             //     cout << "Cell(" << c.lvl << ", " << c.i << "," << c.j << ", " << c.temp[0] << ") --> ";
             //     cout << "Cell(" << new_cells[0].lvl << ", " << new_cells[0].i << "," << new_cells[0].j << ", " << new_cells[0].temp[0] << ")  ";
@@ -743,6 +756,13 @@ void LinearTree::DoRefine() {
             tmp_cells.insert(it, new_cells.begin(), new_cells.end());
             // std::advance(it, 4);
             
+            // for (auto ii = tmp_cells.begin(); ii != tmp_cells.end(); ii++) {
+            //     cout << ii->get_global_number() << " ";
+            // }
+            // cout << endl;
+            // cout << "it->" << it->get_global_number() << endl;
+
+
         } else {
             // std::advance(it, 1);
             it++;
@@ -836,15 +856,22 @@ void LinearTree::GenFromWriteStruct(vector<char>& buf) {
     int j_offset = 2 * sizeof(int);
     int temp_offset = 3 * sizeof(int);
 
-    while (pos < buf.size()) {
-        cout << "pos=" << pos << endl;
+    while (pos < buf.size()-one_sz+1) {
+        cout << " 1 pos=" << pos << endl;
         Cell c;
+        cout << " 2 pos=" << pos << endl;
         c.lvl  = * ((int *)(&p[pos+lvl_offset]));
+        cout << " 3 pos=" << pos << endl;
         c.i    = * ((int *)(&p[pos+i_offset]));
+        cout << " 4 pos=" << pos << endl;
         c.j    = * ((int *)(&p[pos+j_offset]));
+        cout << " 5 pos=" << pos << endl;
         c.temp[0] = * ((double *)(&(p[pos+temp_offset])));
+        cout << " 6 pos=" << pos << endl;
         c.refine_mark = 0;
+        cout << " 7 pos=" << pos << endl;
         cells.push_back(c);
+        cout << " 8 pos=" << pos << endl;
 
         // std::cout << "cell pushed pos=" << pos << endl; 
         if (c.lvl > max_present_lvl) {
@@ -852,6 +879,7 @@ void LinearTree::GenFromWriteStruct(vector<char>& buf) {
         }
 
         pos += one_sz;
+        cout << " 9 pos=" << pos << endl;
     }
 
     cout << "first cell = Cell(" << cells[0].lvl << ", " << cells[0].i << "," << cells[0].j << ", " << cells[0].temp[0] << ")";

@@ -13,7 +13,11 @@ int main(int argc, char **argv) {
         filename   = argv[3];
         n_procs    = atoi(argv[4]);
         offsets_filename   = argv[5];
+    } else {
+        std::cout << "not enough args\n";
+        return -1;
     }
+
     GridInit(base_level, max_level);
     LinearTree grid = LinearTree(&Area::T0);
     while (grid.MarkToRefine()) {

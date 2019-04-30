@@ -6,8 +6,8 @@ OPTS=-O0
 PYTHON_I=python3
 # PYTHON_I=python
 
-BASE_LVL=9
-MAX_LVL=12
+BASE_LVL=7
+MAX_LVL=10
 
 N_PROCS=8
 
@@ -47,7 +47,7 @@ vis_base_grid: update_txt
 	$(PYTHON_I) vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/grid_levels_$(BASE_LVL).png Greys lvls
 	
 vis_decomposition: update_txt
-	$(PYTHON_I) vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/grid_decomposition_$(BASE_LVL)_$(N_PROCS).png tab10 procs $(N_PROCS)
+	$(PYTHON_I) vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/grid_decomposition_$(BASE_LVL)_$(N_PROCS).png prism procs $(N_PROCS)
 
 vis_temps: translate
 	# python3 vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/start_temp.png coolwarm temp
