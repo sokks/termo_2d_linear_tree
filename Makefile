@@ -1,7 +1,7 @@
-# COMPILER=mpixlC
+COMPILER=mpixlC
 # COMPILER=mpicxx
-COMPILER=mpixlcxx_r
-OPTS=-O0\ -g
+# COMPILER=mpixlcxx_r
+OPTS=-O0
 #OPTS=-O0\ -qlanglvl=extended0x
 PYTHON_I=python3
 # PYTHON_I=python
