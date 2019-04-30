@@ -817,6 +817,7 @@ vector<char> LinearTree::GenWriteStruct() {
     vector<char> buf;
     std::cout << " gen structs for write start\n";
     for (int j = 0; j < cells.size(); j++) {
+        cout << "j=" << j << endl;
         Cell c = cells[j];
         char *tmp = (char *)(&c.lvl);
         for (int i = 0; i < sizeof(int); i++) {
