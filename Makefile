@@ -1,8 +1,10 @@
 # COMPILER=mpixlC
-#COMPILER=mpicxx
+# COMPILER=mpicxx
 COMPILER=mpixlcxx_r
 OPTS=-O0
 #OPTS=-O0\ -qlanglvl=extended0x
+PYTHON_I=python3
+# PYTHON_I=python
 
 BASE_LVL=9
 MAX_LVL=12
@@ -42,10 +44,10 @@ bg_job_gen_grid: bin/gen_grid
 	mpisubmit.bg -n 1 -m smp bin/gen_grid -- $(BASE_LVL) $(MAX_LVL) data/refine/base_grid.dat $(N_PROCS) data/refine/offsets_$(N_PROCS).dat
 
 vis_base_grid: update_txt
-	python3 vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/grid_levels_$(BASE_LVL).png Greys lvls
+	$(PYTHON_I) vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/grid_levels_$(BASE_LVL).png Greys lvls
 	
 vis_decomposition: update_txt
-	python3 vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/grid_decomposition_$(BASE_LVL)_$(N_PROCS).png tab10 procs $(N_PROCS)
+	$(PYTHON_I) vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/grid_decomposition_$(BASE_LVL)_$(N_PROCS).png tab10 procs $(N_PROCS)
 
 vis_temps: translate
 	# python3 vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/start_temp.png coolwarm temp
@@ -54,10 +56,10 @@ vis_temps: translate
 	./plot_temps.sh $(MAX_LVL)
 
 vis_start_temp: update_txt
-	python3 vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/start_temp.png coolwarm temp
+	$(PYTHON_I) vis_2d_nonuniform.py $(MAX_LVL) data/refine/base_grid.txt data/pics/start_temp.png coolwarm temp
 
 update_txt: bin/translate
-	bin/translate data/refine/base_grid_tmp.dat data/refine/base_grid.txt
+	bin/translate data/refine/base_grid.dat data/refine/base_grid.txt
 
 
 
@@ -74,7 +76,7 @@ job_mpi_polus: bin/test
 bg_job_run_mpi: bin/test
 	rm -rf data/temp/*
 	mkdir -p data/temp
-	mpisubmit.bg -n 1 -m smp bin/test -- $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS)
+	mpisubmit.bg -n $(N_PROCS) -m smp bin/test -- $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS)
 
 
 bin/test: build/main.o build/area.o build/grid.o build/proc.o Makefile

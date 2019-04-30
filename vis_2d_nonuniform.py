@@ -46,7 +46,7 @@ if plot_dat == 'temp':
     plt.xticks(np.linspace(0, 500, num=6), ['{:1.1f}'.format(x) for x in np.linspace(0, 1, num=6)])
     plt.yticks(np.linspace(0, 500, num=6), ['{:1.1f}'.format(x) for x in np.linspace(0, 1, num=6)])
     if 'base_grid' in filename:
-        ttl = 'Начальное распределение температуры'
+        ttl = 'Start temperature'
 
 if plot_dat == 'lvls':
     zi = griddata((Y, X), L, (xi[None,:], yi[:,None]), method='nearest')

@@ -103,6 +103,9 @@ int Proc::MPIInit(int argc, char **argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiInfo.comm_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiInfo.comm_size);
 
+    // handle errors info
+    MPI_Errhandler_set(MPI_COMM_WORLD,MPI_ERRORS_RETURN);
+
     stat.timers["total"].Start();
     return 0;
 }
@@ -162,8 +165,24 @@ int Proc::InitMesh(char * offsets_filename, char * cells_filename) {
     vector<char> buffer(range[1], 1);
     std::cout << "will read cells file\n";
 
+    MPI_Status rd_st;
     MPI_File_open( mpiInfo.comm, cells_filename, MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
-    MPI_File_read_at(fh, range[0], &buffer[0], range[1]-1, MPI_CHAR, MPI_STATUS_IGNORE);
+    MPI_File_set_errhandler(fh, MPI_ERRORS_RETURN);
+
+    int ierr, errclass, errlen;
+    char err_buffer[MPI_MAX_ERROR_STRING];
+    ierr = MPI_File_read_at(fh, range[0], &buffer[0], range[1], MPI_CHAR, &rd_st);
+    if (ierr != MPI_SUCCESS) {
+        MPI_Error_class(ierr, &errclass);
+        MPI_Error_string(ierr, err_buffer, &errlen);
+        fprintf(stderr, err_buffer);
+        std::cout << mpiInfo.comm_rank  << " read error: " << err_buffer << std::endl;
+        MPI_Abort(mpiInfo.comm, 1);
+    }
+
+    int count;
+    MPI_Get_count(&rd_st, MPI_CHAR, &count);
+    std::cout << mpiInfo.comm_rank  << " read cells file count=" << count << std::endl;
     MPI_File_close(&fh);
 
     std::cout << "read cells file buffer.size()=" << buffer.size() << std::endl;
