@@ -625,7 +625,7 @@ cout << mpiInfo.comm_rank << " here3\n";
         double flows_sum = 0.0;
         cout << mpiInfo.comm_rank << " here4\n";
         for (int jjj = 0; jjj < cell.neighs.size(); jjj++) {
-            Cell& neigh_cell = *(cell.neighs[i]);
+            Cell& neigh_cell = *(cell.neighs[jjj]);
 
             double neigh_x, neigh_y;
             neigh_cell.get_spacial_coords(&neigh_x, &neigh_y);
