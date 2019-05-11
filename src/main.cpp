@@ -33,15 +33,16 @@ char * gen_filename(string baseFolder, int n) {
 
 
 int main(int argc, char **argv) {
-    if (argc < 6) {
-        std::cout << "usage: prog <base_lvl> <max_lvl> <offsets_file> <grid_file> <time_steps>\n";
+    if (argc < 7) {
+        std::cout << "usage: prog <base_lvl> <max_lvl> <offsets_file> <grid_file> <time_steps> <write_freq>\n";
         return 0;
     }
     int    base_level = atoi(argv[1]);
     int    max_level  = atoi(argv[2]);
     char * offsets_file = argv[3];
     char * grid_file = argv[4];
-    int    ts_n       = std::atoi(argv[5]);
+    int    ts_n       = atoi(argv[5]);
+    write_freq        = atoi(argv[5]);
 
     GridInit(base_level, max_level);
     SolverInit(ts_n);   
@@ -67,7 +68,7 @@ int main(int argc, char **argv) {
     // usleep(10000000);
 
     for (int k = 0; k < ts_n; k++) {
-        cout << k  << endl;
+        // cout << k  << endl;
         if (WRITE_LAYERS && (k%write_freq ==0)) {
             p.WriteT(gen_filename(baseFolderTemp, k));
         }

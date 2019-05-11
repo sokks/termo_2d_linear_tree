@@ -817,7 +817,7 @@ vector<char> LinearTree::GenWriteStruct() {
     vector<char> buf;
     std::cout << " gen structs for write start\n";
     for (int j = 0; j < cells.size(); j++) {
-        cout << "j=" << j << endl;
+        // cout << "j=" << j << endl;
         Cell c = cells[j];
         char *tmp = (char *)(&c.lvl);
         for (int i = 0; i < sizeof(int); i++) {
@@ -858,21 +858,21 @@ void LinearTree::GenFromWriteStruct(vector<char>& buf) {
     int temp_offset = 3 * sizeof(int);
 
     while (pos < buf.size()-one_sz+1) {
-        cout << " 1 pos=" << pos << endl;
+        // cout << " 1 pos=" << pos << endl;
         Cell c;
-        cout << " 2 pos=" << pos << endl;
+        // cout << " 2 pos=" << pos << endl;
         c.lvl  = * ((int *)(&p[pos+lvl_offset]));
-        cout << " 3 pos=" << pos << endl;
+        // cout << " 3 pos=" << pos << endl;
         c.i    = * ((int *)(&p[pos+i_offset]));
-        cout << " 4 pos=" << pos << endl;
+        // cout << " 4 pos=" << pos << endl;
         c.j    = * ((int *)(&p[pos+j_offset]));
-        cout << " 5 pos=" << pos << endl;
+        // cout << " 5 pos=" << pos << endl;
         c.temp[0] = * ((double *)(&(buf[pos+temp_offset])));
-        cout << " 6 pos=" << pos << endl;
+        // cout << " 6 pos=" << pos << endl;
         c.refine_mark = 0;
-        cout << " 7 pos=" << pos << endl;
+        // cout << " 7 pos=" << pos << endl;
         cells.push_back(c);
-        cout << " 8 pos=" << pos << endl;
+        // cout << " 8 pos=" << pos << endl;
 
         // std::cout << "cell pushed pos=" << pos << endl; 
         if (c.lvl > max_present_lvl) {
@@ -880,7 +880,7 @@ void LinearTree::GenFromWriteStruct(vector<char>& buf) {
         }
 
         pos += one_sz;
-        cout << " 9 pos=" << pos << endl;
+        // cout << " 9 pos=" << pos << endl;
     }
 
     cout << "first cell = Cell(" << cells[0].lvl << ", " << cells[0].i << "," << cells[0].j << ", " << cells[0].temp[0] << ")";

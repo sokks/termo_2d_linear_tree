@@ -104,7 +104,7 @@ int Proc::MPIInit(int argc, char **argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &mpiInfo.comm_size);
 
     // handle errors info
-    MPI_Errhandler_set(MPI_COMM_WORLD,MPI_ERRORS_RETURN);
+    // MPI_Errhandler_set(MPI_COMM_WORLD,MPI_ERRORS_RETURN);
 
     stat.timers["total"].Start();
     return 0;
@@ -588,7 +588,7 @@ void Proc::MakeStep() {
 
     // usleep(10000000);
 
-    cout << mpiInfo.comm_rank << " here1\n";
+    // cout << mpiInfo.comm_rank << " here1\n";
 
     map<string, MpiTimer> local_timers;
     local_timers["step_p1"] = MpiTimer();
@@ -604,18 +604,20 @@ void Proc::MakeStep() {
 
     local_timers["step_p1"].Start();
 
-cout << mpiInfo.comm_rank << " here2\n";
+// cout << mpiInfo.comm_rank << " here2\n";
     ExchangeGhosts();
-cout << mpiInfo.comm_rank << " here3\n";
-    local_timers["step_p1"].Stop();
+// cout << mpiInfo.comm_rank << " here3\n";
+    // local_timers["step_p1"].Stop();
 
     // PrintMyCells();
     // PrintGhostCells();
 
     time_step_n++;
 
+    stat.timers["compute_temps"].Start();
+// #pragma omp parallel for
     for (int i = 0; i < mesh.cells.size(); i++) {
-        stat.timers["compute_temps"].Start();
+        
         Cell& cell = mesh.cells[i];
         
         double x, y;
@@ -623,7 +625,7 @@ cout << mpiInfo.comm_rank << " here3\n";
 
         // vector<double> termo_flows;
         double flows_sum = 0.0;
-        cout << mpiInfo.comm_rank << " here4\n";
+        // cout << mpiInfo.comm_rank << " here4\n";
         for (int jjj = 0; jjj < cell.neighs.size(); jjj++) {
             Cell& neigh_cell = *(cell.neighs[jjj]);
 
@@ -641,7 +643,7 @@ cout << mpiInfo.comm_rank << " here3\n";
             // termo_flows.push_back(full_flow);
             flows_sum += full_flow;
         }
-    cout << mpiInfo.comm_rank << " here5\n";
+    // cout << mpiInfo.comm_rank << " here5\n";
         // double flows_sum = 0.0;
         // for (double f: termo_flows) {
         //     flows_sum += f;
@@ -656,7 +658,7 @@ cout << mpiInfo.comm_rank << " here3\n";
         stat.timers["get_border_cond"].Stop();
 
         double new_T = 0;
-        cout << mpiInfo.comm_rank << " here6\n";
+        // cout << mpiInfo.comm_rank << " here6\n";
         if (border_cond_type == char(-1)) {  // внутренняя ячейка
 
             if (FULL_DEBUG) {
@@ -688,8 +690,7 @@ cout << mpiInfo.comm_rank << " here3\n";
                     + Area::Q(x, y, tau * time_step_n)) /  cell.get_S();
 
         } else if (border_cond_type == 2) { // граничное условие второго рода
-cout << mpiInfo.comm_rank << " here7\n";
-            // TODO это просто добавить поток, заданный условием
+// cout << mpiInfo.comm_rank << " here7\n";
             double border_x = x, border_y = y; // +- lvl_dx/2
             double lvl_dx = get_lvl_dx(cell.lvl);
             if (cell.is_right_border()) {
@@ -714,8 +715,10 @@ cout << mpiInfo.comm_rank << " here7\n";
 
         mesh.cells[i].temp[next_temp_idx] = new_T;
 
-        stat.timers["compute_temps"].Stop();
+        
     }
+    stat.timers["compute_temps"].Stop();
+
     // stat.timers["step"].Stop();
 }
 

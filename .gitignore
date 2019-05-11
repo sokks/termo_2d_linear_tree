@@ -6,3 +6,4 @@ bin/*
 tmp.txt
 *.icloud
 *.paint
+src/bla.cpp

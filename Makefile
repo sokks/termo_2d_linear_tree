@@ -1,23 +1,39 @@
 COMPILER=mpixlC
 # COMPILER=mpicxx
 # COMPILER=mpixlcxx_r
+# OPTS=-O0 -std=c++11
 OPTS=-O0
+# OPTS=-O0 -Xpreprocessor -fopenmp -lomp -I $$(brew --prefix libomp)/include -L "$$(brew --prefix libomp)/lib"
+# OPTS=-O0 -Xpreprocessor -fopenmp -lomp
 #OPTS=-O0\ -qlanglvl=extended0x
 PYTHON_I=python3
 # PYTHON_I=python
 
-BASE_LVL=7
-MAX_LVL=10
+BASE_LVL=9
+MAX_LVL=12
 
 N_PROCS=8
+N_THREADS=1
 
-TIME_STEPS=100
+TIME_STEPS=100000
+WRITE_FREQ=10000
 
 all: bin
 
 bin: bin/test
 
 
+bla: src/bla.cpp Makefile
+	gcc -O0 -Xpreprocessor -fopenmp -lomp -I /usr/local/opt/libomp/include -L /usr/local/opt/libomp/lib -o $@ src/bla.cpp
+	export OMP_NUM_THREADS=$(N_THREADS)
+	# export I_MPI_PIN_DOMAIN=omp
+	# mpiexec -np $(N_PROCS) ./bla 8
+	./bla
+# Compile it (you should see no errors or warnings):
+# $ clang -fopenmp -I <path to omp.h> -L <LLVM OpenMP library path> hello_openmp.c -o hello_openmp
+# and execute:
+# $ export [DY]LD_LIBRARY_PATH=<OpenMP library path>:$[DY]LD_LIBRARY_PATH
+# $ ./hello_openmp
 
 translate: bin/translate
 	./translate.sh
@@ -66,43 +82,49 @@ update_txt: bin/translate
 run_mpi: bin/test
 	rm -rf data/temp/*
 	mkdir -p data/temp
-	mpiexec -np $(N_PROCS) bin/test $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS)
+	mpiexec -np $(N_PROCS) bin/test $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS) $(WRITE_FREQ)
+
+run_mpi_omp: bin/test
+	rm -rf data/temp/*
+	mkdir -p data/temp
+	export OMP_NUM_THREADS=$(N_THREADS)
+	mpiexec -np $(N_PROCS) -genv OMP_NUM_THREADS=$(N_THREADS) -genv I_MPI_PIN_DOMAIN=omp bin/test $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS)
 
 polus_job_run_mpi: bin/test
 	rm -rf data/temp/*
 	mkdir -p data/temp
-	mpisubmit.pl -p $(N_PROCS) bin/test -- $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS)
+	mpisubmit.pl -p $(N_PROCS) bin/test -- $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS) $(WRITE_FREQ)
 
 bg_job_run_mpi: bin/test
 	rm -rf data/temp/*
 	mkdir -p data/temp
-	mpisubmit.bg -n $(N_PROCS) -m smp bin/test -- $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS)
+	mpisubmit.bg -n $(N_PROCS) -m smp bin/test -- $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS) $(WRITE_FREQ)
 
 
 bin/test: build/main.o build/area.o build/grid.o build/proc.o Makefile
 	mkdir -p bin
-	$(COMPILER) -std=c++11 -o $@ build/main.o build/area.o build/grid.o build/proc.o
+	$(COMPILER) $(OPTS) -o $@ build/main.o build/area.o build/grid.o build/proc.o
 
 build/main.o: src/main.cpp Makefile
 	mkdir -p build
-	$(COMPILER) -std=c++11 $(OPTS) -o $@ -c src/main.cpp
+	$(COMPILER) $(OPTS) -o $@ -c src/main.cpp
 
 
 bin/gen_grid: build/gen_grid.o build/grid.o build/area.o Makefile
 	mkdir -p bin
-	$(COMPILER) -std=c++11 $(OPTS) -o $@ build/gen_grid.o build/grid.o build/area.o
+	$(COMPILER) $(OPTS) -o $@ build/gen_grid.o build/grid.o build/area.o
 
 build/gen_grid.o: src/gen_grid.cpp Makefile
 	mkdir -p build
-	$(COMPILER) -std=c++11 $(OPTS) -o $@ -c src/gen_grid.cpp
+	$(COMPILER) $(OPTS) -o $@ -c src/gen_grid.cpp
 
 
 bin/translate: build/translate.o Makefile
-	$(COMPILER) -std=c++11 $(OPTS) -o $@ build/translate.o
+	$(COMPILER) $(OPTS) -o $@ build/translate.o
 
 build/translate.o: src/translate.cpp Makefile
 	mkdir -p build
-	$(COMPILER) -std=c++11 $(OPTS) -o $@ -c src/translate.cpp
+	$(COMPILER) $(OPTS) -o $@ -c src/translate.cpp
 
 
 build/grid.o: src/grid/grid.h src/grid/grid.cpp Makefile
