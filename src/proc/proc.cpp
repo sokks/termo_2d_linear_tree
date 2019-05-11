@@ -752,7 +752,7 @@ void Proc::WriteT(char * filename) {
     stat.timers["io"].Stop();
 }
 
-void Proc::WriteStat(string filename) {
+void Proc::WriteStat() {
     std::cout << "MpiInfo: " << mpiInfo.toString() << std::endl;
     double step = stat.timers["step"].FullDur();
     double compute_temps = stat.timers["compute_temps"].FullDur();
