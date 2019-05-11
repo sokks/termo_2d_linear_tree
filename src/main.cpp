@@ -68,11 +68,14 @@ int main(int argc, char **argv) {
     // usleep(10000000);
 
     for (int k = 0; k < ts_n; k++) {
-        // cout << k  << endl;
+        cout << k  << ": ";
         if (WRITE_LAYERS && (k%write_freq ==0)) {
             p.WriteT(gen_filename(baseFolderTemp, k));
         }
+        double t = MPI_Wtime();
         p.MakeStep();
+        t = MPI_Wtime() - t;
+        cout << t << endl;
     }
 
     // p.WriteT(gen_filename(baseFolderTemp, ts_n));
