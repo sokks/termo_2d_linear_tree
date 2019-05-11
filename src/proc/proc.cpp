@@ -70,7 +70,8 @@ Proc::Proc() {
     stat.timers["exchange_ghosts"] = MpiTimer();
     stat.timers["communication"] = MpiTimer();
     stat.timers["find_cell"] = MpiTimer();
-    stat.timers["cumpute_temps"] = MpiTimer();
+    stat.timers["compute_temps"] = MpiTimer();
+    stat.timers["step"] = MpiTimer();
     stat.timers["get_border_cond"] = MpiTimer();
     stat.timers["get_possible_neighs"] = MpiTimer();
     stat.timers["sort_neighs"] = MpiTimer();
@@ -93,8 +94,8 @@ Proc::~Proc() {
         delete[] ghosts_out_temps;
     }
 
-    std::cout << mpiInfo.comm_rank << " ";
-    std::cout << stat.toString() << std::endl;
+    // std::cout << mpiInfo.comm_rank << " ";
+    // std::cout << stat.toString() << std::endl;
 }
 
 int Proc::MPIInit(int argc, char **argv) {
@@ -586,23 +587,25 @@ void Proc::FillStart(double (*start_func)(double, double)) {
 
 void Proc::MakeStep() {
 
+    stat.timers["step"].Start();
+
     // usleep(10000000);
 
     // cout << mpiInfo.comm_rank << " here1\n";
 
     map<string, MpiTimer> local_timers;
-    local_timers["step_p1"] = MpiTimer();
-    local_timers["step_p2"] = MpiTimer();
-    local_timers["step_p3"] = MpiTimer();
-    local_timers["step_p4"] = MpiTimer();
-    local_timers["step_p5"] = MpiTimer();
+    // local_timers["step_p1"] = MpiTimer();
+    // local_timers["step_p2"] = MpiTimer();
+    // local_timers["step_p3"] = MpiTimer();
+    // local_timers["step_p4"] = MpiTimer();
+    // local_timers["step_p5"] = MpiTimer();
 
     // stat.timers["step"].Start();
     int temp_l_corr = time_step_n % 2; // чтобы брать значение temp[0] или temp[1]
     int cur_temp_idx = temp_l_corr;
     int next_temp_idx = (temp_l_corr + 1) % 2;
 
-    local_timers["step_p1"].Start();
+    // local_timers["step_p1"].Start();
 
 // cout << mpiInfo.comm_rank << " here2\n";
     ExchangeGhosts();
@@ -719,6 +722,8 @@ void Proc::MakeStep() {
     }
     stat.timers["compute_temps"].Stop();
 
+    stat.timers["step"].Stop();
+
     // stat.timers["step"].Stop();
 }
 
@@ -749,6 +754,27 @@ void Proc::WriteT(char * filename) {
 
 void Proc::WriteStat(string filename) {
     std::cout << "MpiInfo: " << mpiInfo.toString() << std::endl;
+    double step = stat.timers["step"].FullDur();
+    double compute_temps = stat.timers["compute_temps"].FullDur();
+    double exchange_ghosts = stat.timers["exchange_ghosts"].FullDur();
+    double build_ghosts = stat.timers["build_ghosts"].FullDur();
+    double init_mesh = stat.timers["init_mesh"].FullDur();
+
+    double max_step, max_compute_temps, max_exchange_ghosts, max_build_ghosts, max_init_mesh;
+
+    MPI_Reduce(&step, &max_step, 1, MPI_DOUBLE, MPI_MAX, 0, mpiInfo.comm);
+    MPI_Reduce(&compute_temps, &max_compute_temps, 1, MPI_DOUBLE, MPI_MAX, 0, mpiInfo.comm);
+    MPI_Reduce(&exchange_ghosts, &max_exchange_ghosts, 1, MPI_DOUBLE, MPI_MAX, 0, mpiInfo.comm);
+    MPI_Reduce(&build_ghosts, &max_build_ghosts, 1, MPI_DOUBLE, MPI_MAX, 0, mpiInfo.comm);
+    MPI_Reduce(&init_mesh, &max_init_mesh, 1, MPI_DOUBLE, MPI_MAX, 0, mpiInfo.comm);
+
+    if (mpiInfo.comm_rank == 0) {
+        cout << "\n\n\n\nSTAT| max_step: " << max_step
+                << " | max_compute_temps: " << max_compute_temps
+                << " | max_exchange_ghosts: " << max_exchange_ghosts
+                << " | max_build_ghosts: " << max_build_ghosts
+                << " | max_init_mesh: " << max_init_mesh << " |\n\n\n\n" << endl; 
+    }
 }
 
 
