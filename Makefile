@@ -15,8 +15,8 @@ MAX_LVL=12
 N_PROCS=8
 N_THREADS=1
 
-TIME_STEPS=100000
-WRITE_FREQ=10000
+TIME_STEPS=2000
+WRITE_FREQ=200
 
 all: bin
 
@@ -93,7 +93,7 @@ run_mpi_omp: bin/test
 polus_job_run_mpi: bin/test
 	rm -rf data/temp/*
 	mkdir -p data/temp
-	mpisubmit.pl -p $(N_PROCS) bin/test -- $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS) $(WRITE_FREQ)
+	mpisubmit.pl -p $(N_PROCS) -w 00:30 bin/test -- $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS) $(WRITE_FREQ)
 
 bg_job_run_mpi: bin/test
 	rm -rf data/temp/*
