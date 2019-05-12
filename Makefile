@@ -4,7 +4,7 @@ COMPILER=mpixlcxx
 # COMPILER=mpixlcxx_r
 # OPTS=-O0 -std=c++11
 OPTS=-O0 -qarch=450
-RUN_OPTS=-env BG_MAXALIGNEXP=-1
+RUN_OPTS=-env BG_MAXALIGNEXP=-1 -w 00:30:00
 # OPTS=-O0 -Xpreprocessor -fopenmp -lomp -I $$(brew --prefix libomp)/include -L "$$(brew --prefix libomp)/lib"
 # OPTS=-O0 -Xpreprocessor -fopenmp -lomp
 #OPTS=-O0\ -qlanglvl=extended0x
@@ -23,19 +23,6 @@ WRITE_FREQ=200
 all: bin
 
 bin: bin/test
-
-
-bla: src/bla.cpp Makefile
-	gcc -O0 -Xpreprocessor -fopenmp -lomp -I /usr/local/opt/libomp/include -L /usr/local/opt/libomp/lib -o $@ src/bla.cpp
-	export OMP_NUM_THREADS=$(N_THREADS)
-	# export I_MPI_PIN_DOMAIN=omp
-	# mpiexec -np $(N_PROCS) ./bla 8
-	./bla
-# Compile it (you should see no errors or warnings):
-# $ clang -fopenmp -I <path to omp.h> -L <LLVM OpenMP library path> hello_openmp.c -o hello_openmp
-# and execute:
-# $ export [DY]LD_LIBRARY_PATH=<OpenMP library path>:$[DY]LD_LIBRARY_PATH
-# $ ./hello_openmp
 
 translate: bin/translate
 	./translate.sh
@@ -100,7 +87,7 @@ polus_job_run_mpi: bin/test
 bg_job_run_mpi: bin/test
 	rm -rf data/temp/*
 	mkdir -p data/temp
-	mpisubmit.bg -n $(N_PROCS) -m smp -w 00:30:00 bin/test -- $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS) $(WRITE_FREQ)
+	mpisubmit.bg -n $(N_PROCS) -m smp $(RUN_OPTS) bin/test -- $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS) $(WRITE_FREQ)
 
 
 bin/test: build/main.o build/area.o build/grid.o build/proc.o Makefile

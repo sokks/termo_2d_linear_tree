@@ -757,7 +757,7 @@ void Proc::WriteStat() {
     double step = stat.timers["step"].FullDur();
     double compute_temps = stat.timers["compute_temps"].FullDur();
     double exchange_ghosts = stat.timers["exchange_ghosts"].FullDur();
-    double build_ghosts = stat.timers["build_ghosts"].FullDur();
+    double build_ghosts = stat.timers["build_ghosts"].FullDur() + stat.timers["build_neighs"].FullDur();
     double init_mesh = stat.timers["init_mesh"].FullDur();
 
     double max_step, max_compute_temps, max_exchange_ghosts, max_build_ghosts, max_init_mesh;
