@@ -845,7 +845,7 @@ vector<char> LinearTree::GenWriteStruct() {
 }
 
 void LinearTree::GenFromWriteStruct(vector<char>& buf) {
-    cout << mpiInfo.comm_rank << " started gen grid from write struct\n";
+    cout << " started gen grid from write struct\n";
 
     max_present_lvl = base_lvl;
 
@@ -888,7 +888,7 @@ void LinearTree::GenFromWriteStruct(vector<char>& buf) {
     cout << "first cell = Cell(" << cells[0].lvl << ", " << cells[0].i << "," << cells[0].j << ", " << cells[0].temp[0] << ")";
     cout << "last cell = Cell(" << cells[cells.size()-1].lvl << ", " << cells[cells.size()-1].i << "," << cells[cells.size()-1].j << ", " << cells[cells.size()-1].temp[0] << ")";
     
-    cout << mpiInfo.comm_rank << " finished gen grid from write struct\n";
+    cout << " finished gen grid from write struct\n";
 }
 
 double get_lvl_dx(int lvl) {
