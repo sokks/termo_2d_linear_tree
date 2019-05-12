@@ -863,13 +863,13 @@ void LinearTree::GenFromWriteStruct(vector<char>& buf) {
         cout << " 1 pos=" << pos << endl;
         Cell c;
         cout << " 2 pos=" << pos << endl;
-        c.lvl  = * ((int *)(&p[pos+lvl_offset]));
+        c.lvl  = * ((int *)(&buf[pos+lvl_offset]));
         cout << " 3 pos=" << pos << endl;
-        c.i    = * ((int *)(&p[pos+i_offset]));
+        c.i    = * ((int *)(&buf[pos+i_offset]));
         cout << " 4 pos=" << pos << endl;
-        c.j    = * ((int *)(&p[pos+j_offset]));
-        cout << " 5 pos=" << pos << endl;
-        c.temp[0] = * ((double *)(&p[pos+temp_offset]));
+        c.j    = * ((int *)(&buf[pos+j_offset]));
+        cout << " 5 pos=" << pos+temp_offset << endl;
+        c.temp[0] = * ((double *)(&buf[pos+temp_offset]));
         cout << " 6 pos=" << pos << endl;
         c.refine_mark = 0;
         cout << " 7 pos=" << pos << endl;
