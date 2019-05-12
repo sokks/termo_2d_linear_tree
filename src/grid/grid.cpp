@@ -859,7 +859,10 @@ void LinearTree::GenFromWriteStruct(vector<char>& buf) {
     int j_offset = 2 * sizeof(int);
     int temp_offset = 3 * sizeof(int);
 
-    cout << "&buf[0]=" << (char*) (&buf[0]) << " &buf[-1]=" << (char *) (&buf[buf.size()-1]) << endl;
+
+    int *tmp1 = (int *) (&buf[0]);
+    int *tmp2 = (int *) (&buf[buf.size()-8]);
+    cout << "&buf[0]=" << tmp1 << " &buf[-1]=" << tmp2 << endl;
 
     while (pos < buf.size()-one_sz+1) {
         // cout << " 1 pos=" << pos << endl;
