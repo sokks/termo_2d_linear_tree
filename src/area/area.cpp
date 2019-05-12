@@ -33,8 +33,8 @@ int Area::Refine1(double x, double y) {
     double r = 0.24;
     double c_x = 0.25;
     double c_y = 0.25;
-    // if ( (x-c_x) * (x-c_x) + (y-c_y) * (y-c_y) < r*r ) { //,0078125 < 0,09
-    if ( (fabs(x-c_x) < r) && (fabs(y - c_y) < r) ) {
+    if ( (x-c_x) * (x-c_x) + (y-c_y) * (y-c_y) < r*r ) { //,0078125 < 0,09
+    // if ( (fabs(x-c_x) < r) && (fabs(y - c_y) < r) ) {
         return 1;
     }
     return 0.0;
@@ -44,8 +44,8 @@ int Area::Refine2(double x, double y) {
     double r = 0.11;
     double c_x = 0.25;
     double c_y = 0.25;
-    // if ( (x-c_x) * (x-c_x) + (y-c_y) * (y-c_y) < r*r ) { //,0078125 < 0,09
-    if ( (fabs(x-c_x) < r) && (fabs(y - c_y) < r) ) {
+    if ( (x-c_x) * (x-c_x) + (y-c_y) * (y-c_y) < r*r ) { //,0078125 < 0,09
+    // if ( (fabs(x-c_x) < r) && (fabs(y - c_y) < r) ) {
         return 1;
     }
     return 0.0;
@@ -55,8 +55,8 @@ int Area::Refine3(double x, double y) {
     double r = 0.05;
     double c_x = 0.25;
     double c_y = 0.25;
-    // if ( (x-c_x) * (x-c_x) + (y-c_y) * (y-c_y) < r*r ) { //,0078125 < 0,09
-    if ( (fabs(x-c_x) < r) && (fabs(y - c_y) < r) ) {
+    if ( (x-c_x) * (x-c_x) + (y-c_y) * (y-c_y) < r*r ) { //,0078125 < 0,09
+    // if ( (fabs(x-c_x) < r) && (fabs(y - c_y) < r) ) {
         return 1;
     }
     return 0.0;

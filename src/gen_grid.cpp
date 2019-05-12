@@ -25,6 +25,8 @@ int main(int argc, char **argv) {
     }
     // grid.Balance21();
 
+    std::cout << "N_CELLS=" << grid.cells.size() << std::endl;
+
     grid.Write(filename);
     grid.WriteOffsets(offsets_filename, n_procs);
 }

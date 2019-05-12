@@ -1,5 +1,5 @@
-COMPILER=mpixlC
-# COMPILER=mpicxx
+# COMPILER=mpixlC
+COMPILER=mpicxx
 # COMPILER=mpixlcxx_r
 # OPTS=-O0 -std=c++11
 OPTS=-O0
@@ -12,7 +12,7 @@ PYTHON_I=python3
 BASE_LVL=9
 MAX_LVL=12
 
-N_PROCS=8
+N_PROCS=32
 N_THREADS=1
 
 TIME_STEPS=200
@@ -82,7 +82,7 @@ update_txt: bin/translate
 run_mpi: bin/test
 	rm -rf data/temp/*
 	mkdir -p data/temp
-	mpiexec -np $(N_PROCS) bin/test $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS) $(WRITE_FREQ)
+	mpiexec -np $(N_PROCS) --oversubscribe bin/test $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS) $(WRITE_FREQ)
 
 run_mpi_omp: bin/test
 	rm -rf data/temp/*
