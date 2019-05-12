@@ -883,11 +883,11 @@ void LinearTree::GenFromWriteStruct(vector<char>& buf) {
         cout << "PROBLEM " << "(double*) (&buf[offset])=" << (double*) (&buf[pos+temp_offset]) << endl;
         cout << "PROBLEM " << "* ((double*) (&buf[offset]))=" << *((double*) (&buf[pos+temp_offset])) << endl;
         c.temp[0] = * ((double *)(&buf[pos+temp_offset]));
-        // cout << " 6 pos=" << pos << endl;
+        cout << " 6 pos=" << pos << endl;
         c.refine_mark = 0;
-        // cout << " 7 pos=" << pos << endl;
+        cout << " 7 pos=" << pos << endl;
         cells.push_back(c);
-        // cout << " 8 pos=" << pos << endl;
+        cout << " 8 pos=" << pos << endl;
 
         std::cout << "cell pushed pos=" << pos << endl; 
         if (c.lvl > max_present_lvl) {
