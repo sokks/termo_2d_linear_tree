@@ -4,6 +4,7 @@ COMPILER=mpixlcxx
 # COMPILER=mpixlcxx_r
 # OPTS=-O0 -std=c++11
 OPTS=-O0 -qarch=450
+RUN_OPTS=-env BG_MAXALIGNEXP=-1
 # OPTS=-O0 -Xpreprocessor -fopenmp -lomp -I $$(brew --prefix libomp)/include -L "$$(brew --prefix libomp)/lib"
 # OPTS=-O0 -Xpreprocessor -fopenmp -lomp
 #OPTS=-O0\ -qlanglvl=extended0x
