@@ -1,5 +1,6 @@
 # COMPILER=mpixlC
-COMPILER=mpicxx
+# COMPILER=mpicxx
+COMPILER=mpixlcxx
 # COMPILER=mpixlcxx_r
 # OPTS=-O0 -std=c++11
 OPTS=-O0
@@ -12,7 +13,7 @@ PYTHON_I=python3
 BASE_LVL=9
 MAX_LVL=12
 
-N_PROCS=32
+N_PROCS=16
 N_THREADS=1
 
 TIME_STEPS=200
