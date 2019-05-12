@@ -885,7 +885,7 @@ void LinearTree::GenFromWriteStruct(vector<char>& buf) {
         double tmp = * ((double *)(&buf[pos+temp_offset]));
         cout << " 06 pos=" << pos << endl;
         cout << "c.temp[0]=" << c.temp[0] << endl;
-        c.temp[0] = * ((double *)(&buf[pos+temp_offset]));
+        c.temp[0] = tmp;
         cout << " 6 pos=" << pos << endl;
         c.refine_mark = 0;
         cout << " 7 pos=" << pos << endl;
