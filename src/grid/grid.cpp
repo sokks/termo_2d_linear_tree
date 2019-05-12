@@ -860,21 +860,29 @@ void LinearTree::GenFromWriteStruct(vector<char>& buf) {
     int temp_offset = 3 * sizeof(int);
 
     while (pos < buf.size()-one_sz+1) {
-        cout << " 1 pos=" << pos << endl;
+        // cout << " 1 pos=" << pos << endl;
         Cell c;
-        cout << " 2 pos=" << pos << endl;
+        // cout << " 2 pos=" << pos << endl;
         c.lvl  = * ((int *)(&buf[pos+lvl_offset]));
-        cout << " 3 pos=" << pos << endl;
+        // cout << " 3 pos=" << pos << endl;
         c.i    = * ((int *)(&buf[pos+i_offset]));
-        cout << " 4 pos=" << pos << endl;
+        // cout << " 4 pos=" << pos << endl;
         c.j    = * ((int *)(&buf[pos+j_offset]));
-        cout << " 5 pos=" << pos+temp_offset << endl;
+        // cout << " 5 pos=" << pos+temp_offset << endl;
+        
+        cout << "PROBLEM " << "offset=" << pos+temp_offset << endl;
+        cout << "PROBLEM " << "buf[offset]=" << buf[pos+temp_offset] << " " << buf[pos+temp_offset+1] 
+                            << " " << buf[pos+temp_offset+2] << " " << buf[pos+temp_offset+3] 
+                            << " " << buf[pos+temp_offset+4] << " " << buf[pos+temp_offset+5] << endl;
+        cout << "PROBLEM " << "&buf[offset]=" << &buf[pos+temp_offset] << endl;
+        cout << "PROBLEM " << "(double*) (&buf[offset])=" << (double*) (&buf[pos+temp_offset]) << endl;
+        cout << "PROBLEM " << "* ((double*) (&buf[offset]))=" << *((double*) (&buf[pos+temp_offset])) << endl;
         c.temp[0] = * ((double *)(&buf[pos+temp_offset]));
-        cout << " 6 pos=" << pos << endl;
+        // cout << " 6 pos=" << pos << endl;
         c.refine_mark = 0;
-        cout << " 7 pos=" << pos << endl;
+        // cout << " 7 pos=" << pos << endl;
         cells.push_back(c);
-        cout << " 8 pos=" << pos << endl;
+        // cout << " 8 pos=" << pos << endl;
 
         std::cout << "cell pushed pos=" << pos << endl; 
         if (c.lvl > max_present_lvl) {
