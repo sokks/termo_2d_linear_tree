@@ -130,15 +130,15 @@ build/translate.o: src/translate.cpp Makefile
 
 build/grid.o: src/grid/grid.h src/grid/grid.cpp Makefile
 	mkdir -p build
-	$(COMPILER) -std=c++11 $(OPTS) -o $@ -c src/grid/grid.cpp 
+	$(COMPILER) $(OPTS) -o $@ -c src/grid/grid.cpp 
 
 build/proc.o: src/proc/proc.h src/proc/proc.cpp Makefile
 	mkdir -p build
-	$(COMPILER) -std=c++11 $(OPTS) -o $@ -c src/proc/proc.cpp 
+	$(COMPILER) $(OPTS) -o $@ -c src/proc/proc.cpp 
 
 build/area.o: src/area/area.h src/area/area.cpp Makefile
 	mkdir -p build
-	$(COMPILER) -std=c++11 $(OPTS) -o $@ -c src/area/area.cpp
+	$(COMPILER) $(OPTS) -o $@ -c src/area/area.cpp
 
 
 clean:
