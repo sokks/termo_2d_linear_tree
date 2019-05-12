@@ -98,7 +98,7 @@ polus_job_run_mpi: bin/test
 bg_job_run_mpi: bin/test
 	rm -rf data/temp/*
 	mkdir -p data/temp
-	mpisubmit.bg -n $(N_PROCS) -m smp bin/test -- $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS) $(WRITE_FREQ)
+	mpisubmit.bg -n $(N_PROCS) -m smp -w 00:30:00 bin/test -- $(BASE_LVL) $(MAX_LVL) data/refine/offsets_$(N_PROCS).dat data/refine/base_grid.dat $(TIME_STEPS) $(WRITE_FREQ)
 
 
 bin/test: build/main.o build/area.o build/grid.o build/proc.o Makefile
