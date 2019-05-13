@@ -1,7 +1,7 @@
 # COMPILER=mpixlC
 # COMPILER=mpicxx
-COMPILER=mpixlcxx
-# COMPILER=mpixlcxx_r
+# COMPILER=mpixlcxx
+COMPILER=mpixlcxx_r
 # OPTS=-O0 -std=c++11
 OPTS=-O0 -qsmp=omp
 RUN_OPTS=-env BG_MAXALIGNEXP=-1 -w 00:30:00
