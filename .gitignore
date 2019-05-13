@@ -7,3 +7,6 @@ tmp.txt
 *.icloud
 *.paint
 src/bla.cpp
+test.*
+gen_grid.*
+core.*
