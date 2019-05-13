@@ -617,9 +617,14 @@ void Proc::MakeStep() {
 
     time_step_n++;
 
+    int i;
+
     stat.timers["compute_temps"].Start();
-// #pragma omp parallel for
-    for (int i = 0; i < mesh.cells.size(); i++) {
+    # pragma omp parallel
+    {
+    cout << "proc " << mpiInfo.comm_rank << " thread " << omp_get_thread_num() << endl;
+    # pragma omp for private(i)
+    for (i = 0; i < mesh.cells.size(); i++) {
         
         Cell& cell = mesh.cells[i];
         
@@ -646,7 +651,7 @@ void Proc::MakeStep() {
             // termo_flows.push_back(full_flow);
             flows_sum += full_flow;
         }
-    // cout << mpiInfo.comm_rank << " here5\n";
+        // cout << mpiInfo.comm_rank << " here5\n";
         // double flows_sum = 0.0;
         // for (double f: termo_flows) {
         //     flows_sum += f;
@@ -693,7 +698,7 @@ void Proc::MakeStep() {
                     + Area::Q(x, y, tau * time_step_n)) /  cell.get_S();
 
         } else if (border_cond_type == 2) { // граничное условие второго рода
-// cout << mpiInfo.comm_rank << " here7\n";
+            // cout << mpiInfo.comm_rank << " here7\n";
             double border_x = x, border_y = y; // +- lvl_dx/2
             double lvl_dx = get_lvl_dx(cell.lvl);
             if (cell.is_right_border()) {
@@ -719,6 +724,7 @@ void Proc::MakeStep() {
         mesh.cells[i].temp[next_temp_idx] = new_T;
 
         
+    }
     }
     stat.timers["compute_temps"].Stop();
 
